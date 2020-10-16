@@ -1,0 +1,11 @@
+{
+  "name": "card-playroom-server",
+  "dockerFile": "Dockerfile",
+  "forwardPorts": [],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "rust-lang.rust"
+  ]
+}
