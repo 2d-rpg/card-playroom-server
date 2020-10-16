@@ -1,7 +1,7 @@
 {
   "name": "card-playroom-server",
   "dockerFile": "Dockerfile",
-  "forwardPorts": [],
+  "forwardPorts": [8080],
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash"
   },

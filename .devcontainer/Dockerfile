@@ -1,6 +1,5 @@
 FROM rust:1.47.0-slim
 
-# Install fundamental tools
 RUN apt update \
     && apt install -y --no-install-recommends \
     apt-utils \
