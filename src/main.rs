@@ -6,7 +6,7 @@ use std::env;
 use std::sync::Arc;
 // use std::time::{Duration, Instant};
 
-use actix::prelude::*;
+// use actix::prelude::*;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{get, post, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
