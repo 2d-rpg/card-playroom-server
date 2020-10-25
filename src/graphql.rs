@@ -24,45 +24,45 @@ pub struct Query;
 pub struct Mutation;
 
 impl QueryFields for Query {
-    fn field_users(
+    fn field_rooms(
         &self,
         executor: &Executor<'_, Context>,
-        _trail: &QueryTrail<'_, User, Walked>,
-    ) -> FieldResult<Vec<User>> {
-        use crate::schema::users;
+        _trail: &QueryTrail<'_, Room, Walked>,
+    ) -> FieldResult<Vec<Room>> {
+        use crate::schema::rooms;
 
-        users::table
-            .load::<crate::models::User>(&executor.context().db_con)
-            .and_then(|users| Ok(users.into_iter().map_into().collect()))
+        rooms::table
+            .load::<crate::models::Room>(&executor.context().db_con)
+            .and_then(|rooms| Ok(rooms.into_iter().map_into().collect()))
             .map_err(Into::into)
     }
 }
 
 impl MutationFields for Mutation {
-    fn field_create_user(
+    fn field_create_room(
         &self,
         executor: &Executor<'_, Context>,
-        _trail: &QueryTrail<'_, User, Walked>,
+        _trail: &QueryTrail<'_, Room, Walked>,
         name: String,
-    ) -> FieldResult<User> {
-        use crate::schema::users;
+    ) -> FieldResult<Room> {
+        use crate::schema::rooms;
 
-        let new_user = crate::models::NewUser { name: name };
+        let new_room = crate::models::NewRoom { name: name };
 
-        diesel::insert_into(users::table)
-            .values(&new_user)
-            .get_result::<crate::models::User>(&executor.context().db_con)
+        diesel::insert_into(rooms::table)
+            .values(&new_room)
+            .get_result::<crate::models::Room>(&executor.context().db_con)
             .map(Into::into)
             .map_err(Into::into)
     }
 }
 
-pub struct User {
+pub struct Room {
     id: i32,
     name: String,
 }
 
-impl UserFields for User {
+impl RoomFields for Room {
     fn field_id(&self, _: &Executor<'_, Context>) -> FieldResult<juniper::ID> {
         Ok(juniper::ID::new(self.id.to_string()))
     }
@@ -72,11 +72,11 @@ impl UserFields for User {
     }
 }
 
-impl From<crate::models::User> for User {
-    fn from(user: crate::models::User) -> Self {
+impl From<crate::models::Room> for Room {
+    fn from(room: crate::models::Room) -> Self {
         Self {
-            id: user.id,
-            name: user.name,
+            id: room.id,
+            name: room.name,
         }
     }
 }
@@ -97,7 +97,7 @@ async fn graphql(
         db_con: db_pool.get().unwrap(),
     };
 
-    let user = web::block(move || {
+    let room = web::block(move || {
         let res = data.execute(&schema, &ctx);
         Ok::<_, serde_json::error::Error>(serde_json::to_string(&res)?)
     })
@@ -105,7 +105,7 @@ async fn graphql(
 
     Ok(HttpResponse::Ok()
         .content_type("application/json")
-        .body(user))
+        .body(room))
 }
 
 pub fn register(config: &mut web::ServiceConfig) {

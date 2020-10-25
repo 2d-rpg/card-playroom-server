@@ -4,16 +4,16 @@ schema {
 }
 
 type Query {
-  users: [User!]! @juniper(ownership: "owned")
+  rooms: [Room!]! @juniper(ownership: "owned")
 }
 
 type Mutation {
-  createUser(
+  createRoom(
     name: String!,
-  ): User! @juniper(ownership: "owned")
+  ): Room! @juniper(ownership: "owned")
 }
 
-type User {
+type Room {
   id: ID! @juniper(ownership: "owned")
   name: String!
 }

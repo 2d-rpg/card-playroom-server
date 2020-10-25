@@ -509,7 +509,6 @@ dependencies = [
  "diesel",
  "dotenv",
  "env_logger",
- "futures01",
  "itertools",
  "juniper",
  "juniper-eager-loading",
@@ -803,12 +802,6 @@ checksum = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
 
 [[package]]
 name = "futures"
-version = "0.1.30"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c7e4c2612746b0df8fed4ce0c69156021b704c9aefa360311c04e6e9e002eed"
-
-[[package]]
-name = "futures"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d8e3078b7b2a8a671cb7a3d17b4760e4181ea243227776ba83fd043b4ca034e"
@@ -888,15 +881,6 @@ dependencies = [
  "proc-macro-hack",
  "proc-macro-nested",
  "slab",
-]
-
-[[package]]
-name = "futures01"
-version = "0.1.30"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42334006be218eca24733909c18a121a2f54ea0938f7a3bac2425ac4760cd608"
-dependencies = [
- "futures 0.1.30",
 ]
 
 [[package]]
@@ -2014,7 +1998,7 @@ dependencies = [
  "async-trait",
  "backtrace",
  "enum-as-inner",
- "futures 0.3.6",
+ "futures",
  "idna",
  "lazy_static",
  "log",
@@ -2033,7 +2017,7 @@ checksum = "0f23cdfdc3d8300b3c50c9e84302d3bd6d860fb9529af84ace6cf9665f181b77"
 dependencies = [
  "backtrace",
  "cfg-if 0.1.10",
- "futures 0.3.6",
+ "futures",
  "ipconfig",
  "lazy_static",
  "log",

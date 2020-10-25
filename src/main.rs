@@ -8,7 +8,7 @@ use std::env;
 // use actix::prelude::*;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{App, HttpServer};
 // use actix_web_actors::ws;
 
 use diesel::{
@@ -22,20 +22,6 @@ pub mod schema;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type DbCon = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
-
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
-
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
-
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -58,12 +44,8 @@ async fn main() -> std::io::Result<()> {
                     .supports_credentials()
                     .max_age(3600),
             )
-            .service(hello)
-            .service(echo)
-            // .service(rooms)
             // .service(web::resource("/ws/").route(web::get().to(ws_index)))
             .configure(graphql::register)
-            .route("/hey", web::get().to(manual_hello))
     })
     .bind(endpoint)?
     .run()

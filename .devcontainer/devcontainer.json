@@ -1,11 +1,15 @@
 {
   "name": "card-playroom-server",
   "dockerFile": "Dockerfile",
-  "forwardPorts": [8080],
+  "forwardPorts": [
+    8080
+  ],
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash"
   },
   "extensions": [
-    "rust-lang.rust"
+    "rust-lang.rust",
+    "bungcip.better-toml",
+    "kumar-harsh.graphql-for-vscode"
   ]
 }
