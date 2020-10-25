@@ -53,7 +53,7 @@ async fn main() -> std::io::Result<()> {
     // Start http server
     HttpServer::new(move || {
         App::new()
-            .data(schema.clone())
+            .data(db_pool.clone())
             .wrap(Logger::default())
             .wrap(
                 Cors::default()

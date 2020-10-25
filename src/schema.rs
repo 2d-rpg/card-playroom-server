@@ -18,9 +18,6 @@ table! {
 //     player: Vec<String>,
 // }
 
-/// 既存ルームが変更される場合に変更される対象データ．
-///
-/// 参加プレイヤーが増えるだけなので，playerのみ．部屋名変更などはない．
 // #[derive(GraphQLInputObject, Debug)]
 // #[graphql(description = "A game room")]
 // struct NewRoom {
