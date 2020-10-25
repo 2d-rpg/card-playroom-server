@@ -3,16 +3,13 @@ extern crate diesel;
 extern crate dotenv;
 
 use std::env;
-use std::sync::Arc;
 // use std::time::{Duration, Instant};
 
 // use actix::prelude::*;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
-use actix_web::{get, post, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 // use actix_web_actors::ws;
-use juniper::http::graphiql::graphiql_source;
-use juniper::http::GraphQLRequest;
 
 use diesel::{
     prelude::*,
