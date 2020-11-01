@@ -98,7 +98,7 @@ impl RoomFields for Room {
     }
 
     fn field_players(&self, _: &Executor<'_, Context>) -> FieldResult<&Vec<String>> {
-        self.players.try_unwrap().map_err(Into::into)
+        Ok(&self.players)
     }
 }
 
