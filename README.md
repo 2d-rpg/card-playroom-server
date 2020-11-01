@@ -16,7 +16,7 @@ code card-playroom-server
 
 以下 Docker コンテナ上で実行
 
-vscodeで`Reopen in Container`する
+vscodeで`Reopen in Container`する(初めてこの変更を適用する人は`Rebuild`すること)
 
 `.env`ファイルに`DATABASE_URL=postgres://admin:admin@db/mydb`を追加．
 
