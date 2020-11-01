@@ -3,20 +3,12 @@ services:
   db:
     image: postgres:13.0
     container_name: db
-    # volumes:
-    #   - db-data:/var/lib/postgresql/data
     environment:
-      # PGPORT: 5432
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: mydb
-    # ports:
-    #   - "5433:5432"
-    # command: /bin/sh -c "while sleep 1000; do :; done"
     networks:
       - backend
-    # volumes:
-    #   - ./initdb:/docker-entrypoint-initdb.d
 
   web:
     build: .

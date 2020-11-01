@@ -1,7 +1,6 @@
 {
   "name": "card-playroom-server",
   "dockerComposeFile": "docker-compose.yml",
-  // "dockerFile": "Dockerfile",
   "service": "web",
   "workspaceFolder": "/card-playroom-server",
   "forwardPorts": [
