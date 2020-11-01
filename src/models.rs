@@ -4,12 +4,13 @@ use super::schema::rooms;
 pub struct Room {
     pub id: i32,
     pub name: String,
-    pub playersID: Vec<String>,
+    pub players: Vec<String>,
 }
 
 #[derive(Insertable)]
 #[table_name = "rooms"]
 pub struct NewRoom {
     pub name: String,
-    pub playerID: String,
+    //pub player: String,
+    //pub players: String,
 }

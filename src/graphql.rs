@@ -5,6 +5,7 @@ use actix_web::{web, Error, HttpResponse};
 
 use juniper::http::playground::playground_source;
 use juniper::{http::GraphQLRequest, Executor, FieldResult};
+// use juniper_eager_loading::{prelude::*, EagerLoading, HasMany};
 use juniper_from_schema::graphql_schema_from_file;
 
 use diesel::prelude::*;
@@ -44,14 +45,11 @@ impl MutationFields for Mutation {
         executor: &Executor<'_, Context>,
         _trail: &QueryTrail<'_, Room, Walked>,
         name: String,
-        playerID: String,
+        player: String,
     ) -> FieldResult<Room> {
         use crate::schema::rooms;
 
-        let new_room = crate::models::NewRoom {
-            name: name,
-            playerID: playerID,
-        };
+        let new_room = crate::models::NewRoom { name: name };
 
         diesel::insert_into(rooms::table)
             .values(&new_room)
@@ -64,22 +62,30 @@ impl MutationFields for Mutation {
         &self,
         executor: &Executor<'_, Context>,
         _trail: &QueryTrail<'_, Room, Walked>,
-        playerID: String,
-        roomID: String,
+        player: String,
+        room: String,
     ) -> FieldResult<Room> {
         use crate::schema::rooms;
+
+        let mut query = rooms::table.order(rooms::id.desc()).into_boxed();
         diesel::insert_into(rooms::table)
             .values(&new_room)
             .get_result::<crate::models::Room>(&executor.context().db_con)
             .map(Into::into)
             .map_err(Into::into)
+
+        // diesel::insert_into(rooms::table)
+        //     .values(&new_room)
+        //     .get_result::<crate::models::Room>(&executor.context().db_con)
+        //     .map(Into::into)
+        //     .map_err(Into::into)
     }
 }
 
 pub struct Room {
     id: i32,
     name: String,
-    playersID: Vec<String>,
+    players: Vec<String>,
 }
 
 impl RoomFields for Room {
@@ -91,8 +97,8 @@ impl RoomFields for Room {
         Ok(&self.name)
     }
 
-    fn field_players(&self, _: &Executor<'_, Context>) -> FieldResult<Vec<&String>> {
-        Ok(vec![&self.playerID]);
+    fn field_players(&self, _: &Executor<'_, Context>) -> FieldResult<&Vec<String>> {
+        self.players.try_unwrap().map_err(Into::into)
     }
 }
 
@@ -101,7 +107,7 @@ impl From<crate::models::Room> for Room {
         Self {
             id: room.id,
             name: room.name,
-            playersID: room.playersID,
+            players: room.players,
         }
     }
 }

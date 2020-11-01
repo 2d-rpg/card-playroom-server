@@ -2,7 +2,7 @@ table! {
     rooms (id) {
         id -> Int4,
         name -> Varchar,
-        playersID -> Array<Varchar>,
+        players -> Array<Varchar>,
     }
 }
 
