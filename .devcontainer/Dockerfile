@@ -5,6 +5,11 @@ RUN apt update \
     apt-utils \
     git \
     ca-certificates \
+    libpq-dev \
+    postgresql \
     && apt autoremove -y \
     && apt clean -y \
     && rm -rf /var/lib/apt/lists/* \
+    && cargo install diesel_cli --no-default-features --features postgres \
+
+ENV CARGO_TARGET_DIR=/tmp/target

@@ -1,28 +1,62 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+#[macro_use]
+extern crate diesel;
+extern crate dotenv;
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
+use std::env;
+// use std::time::{Duration, Instant};
 
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
+// use actix::prelude::*;
+use actix_cors::Cors;
+use actix_web::middleware::Logger;
+use actix_web::{App, HttpServer};
+// use actix_web_actors::ws;
 
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
-}
+use diesel::{
+    prelude::*,
+    r2d2::{self, ConnectionManager},
+};
+
+pub mod graphql;
+pub mod models;
+pub mod schema;
+
+pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+pub type DbCon = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    // Set ENDPOINT from env var
+    let endpoint = dotenv::var("ENDPOINT").expect("ENDPOINT must be set in .env file!") + ":8080";
+    // Set logger
+    env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
+    env_logger::init();
+
+    let db_pool = create_db_pool();
+
+    // Start http server
+    HttpServer::new(move || {
         App::new()
-            .service(hello)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
+            .data(db_pool.clone())
+            .wrap(Logger::default())
+            .wrap(
+                Cors::default()
+                    .allowed_methods(vec!["POST", "GET"])
+                    .supports_credentials()
+                    .max_age(3600),
+            )
+            // .service(web::resource("/ws/").route(web::get().to(ws_index)))
+            .configure(graphql::register)
     })
-    .bind("127.0.0.1:8080")?
+    .bind(endpoint)?
     .run()
     .await
+}
+
+fn create_db_pool() -> DbPool {
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    r2d2::Pool::builder()
+        .max_size(3)
+        .build(ConnectionManager::<PgConnection>::new(database_url))
+        .expect("failed to create db connection pool")
 }

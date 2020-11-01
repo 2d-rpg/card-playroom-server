@@ -1,0 +1,19 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  rooms: [Room!]! @juniper(ownership: "owned")
+}
+
+type Mutation {
+  createRoom(
+    name: String!,
+  ): Room! @juniper(ownership: "owned")
+}
+
+type Room {
+  id: ID! @juniper(ownership: "owned")
+  name: String!
+}
