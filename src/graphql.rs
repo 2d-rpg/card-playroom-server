@@ -44,11 +44,30 @@ impl MutationFields for Mutation {
         executor: &Executor<'_, Context>,
         _trail: &QueryTrail<'_, Room, Walked>,
         name: String,
+        playerID: String,
     ) -> FieldResult<Room> {
         use crate::schema::rooms;
 
-        let new_room = crate::models::NewRoom { name: name };
+        let new_room = crate::models::NewRoom {
+            name: name,
+            playerID: playerID,
+        };
 
+        diesel::insert_into(rooms::table)
+            .values(&new_room)
+            .get_result::<crate::models::Room>(&executor.context().db_con)
+            .map(Into::into)
+            .map_err(Into::into)
+    }
+
+    fn field_enter_room(
+        &self,
+        executor: &Executor<'_, Context>,
+        _trail: &QueryTrail<'_, Room, Walked>,
+        playerID: String,
+        roomID: String,
+    ) -> FieldResult<Room> {
+        use crate::schema::rooms;
         diesel::insert_into(rooms::table)
             .values(&new_room)
             .get_result::<crate::models::Room>(&executor.context().db_con)
@@ -60,6 +79,7 @@ impl MutationFields for Mutation {
 pub struct Room {
     id: i32,
     name: String,
+    playersID: Vec<String>,
 }
 
 impl RoomFields for Room {
@@ -70,6 +90,10 @@ impl RoomFields for Room {
     fn field_name(&self, _: &Executor<'_, Context>) -> FieldResult<&String> {
         Ok(&self.name)
     }
+
+    fn field_players(&self, _: &Executor<'_, Context>) -> FieldResult<Vec<&String>> {
+        Ok(vec![&self.playerID]);
+    }
 }
 
 impl From<crate::models::Room> for Room {
@@ -77,6 +101,7 @@ impl From<crate::models::Room> for Room {
         Self {
             id: room.id,
             name: room.name,
+            playersID: room.playersID,
         }
     }
 }

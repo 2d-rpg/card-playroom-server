@@ -10,10 +10,17 @@ type Query {
 type Mutation {
   createRoom(
     name: String!,
+    playerID: String!,
   ): Room! @juniper(ownership: "owned")
+
+  enterRoom(
+    playerID: String!,
+    roomID: String!,
+  ): Room!
 }
 
 type Room {
   id: ID! @juniper(ownership: "owned")
   name: String!
+  playersID: [String!]!
 }
