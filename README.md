@@ -16,8 +16,55 @@ code card-playroom-server
 
 以下 Docker コンテナ上で実行
 
+vscodeで`Reopen in Container`する
+
+`.env`ファイルに`DATABASE_URL=postgres://admin:admin@db/mydb`を追加．
+
+`diesel`のセットアップを行う．
+
+```bash
+root# diesel setup
+root# diesel migration generate create_rooms
 ```
-cargo run
+
+`up.sql`に以下を追記．
+
+```sql
+CREATE TABLE rooms (
+  id   SERIAL  PRIMARY KEY,
+  name VARCHAR NOT NULL
+);
+```
+
+データベース起動
+
+```bash
+root# diesel migration run
+```
+
+サーバー起動
+
+```bash
+root# cargo run # local-container間の同期が早い場合
+root# cargo run --target-dir /tmp/target # local-container間の同期が遅い場合
+```
+
+データ追加(createRoom)
+
+```graphql
+mutation {
+  createRoom(name: "hoge") {
+    id, name
+  }
+}
+```
+
+データ取得
+
+```graphql
+query {
+  rooms{id, name}
+}
 ```
 
 http://127.0.0.1:8080 にサーバーが建てられる．
