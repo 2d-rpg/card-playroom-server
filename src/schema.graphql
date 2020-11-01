@@ -15,7 +15,7 @@ type Mutation {
 
   enterRoom(
     player: String!,
-    room: String!,
+    room_id: Int!,  
   ): Room!
 }
 

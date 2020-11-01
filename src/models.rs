@@ -11,6 +11,6 @@ pub struct Room {
 #[table_name = "rooms"]
 pub struct NewRoom {
     pub name: String,
-    //pub player: String,
-    //pub players: String,
+    // pub player: String,
+    pub players: Vec<String>,
 }

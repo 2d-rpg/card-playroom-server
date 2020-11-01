@@ -49,7 +49,10 @@ impl MutationFields for Mutation {
     ) -> FieldResult<Room> {
         use crate::schema::rooms;
 
-        let new_room = crate::models::NewRoom { name: name };
+        let new_room = crate::models::NewRoom {
+            name: name,
+            players: vec![player],
+        };
 
         diesel::insert_into(rooms::table)
             .values(&new_room)
@@ -63,13 +66,18 @@ impl MutationFields for Mutation {
         executor: &Executor<'_, Context>,
         _trail: &QueryTrail<'_, Room, Walked>,
         player: String,
-        room: String,
+        room_id: i32,
     ) -> FieldResult<Room> {
         use crate::schema::rooms;
 
-        let mut query = rooms::table.order(rooms::id.desc()).into_boxed();
-        diesel::insert_into(rooms::table)
-            .values(&new_room)
+        let target = rooms::table.find(room_id);
+        let last_player = target
+            .first::<crate::models::Room>(&executor.context().db_con)
+            .unwrap()
+            .players[0];
+
+        diesel::update(target)
+            .set(rooms::dsl::players.eq(vec![last_player, player]))
             .get_result::<crate::models::Room>(&executor.context().db_con)
             .map(Into::into)
             .map_err(Into::into)
