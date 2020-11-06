@@ -71,16 +71,15 @@ impl MutationFields for Mutation {
         use crate::schema::rooms;
 
         let target = rooms::table.find(room_id);
-        let last_player: String = target
+        let mut players: Vec<String> = target
             .first::<crate::models::Room>(&executor.context().db_con)
             .unwrap()
-            .players
-            .get(0)
-            .expect("There is no player!")
-            .to_string();
+            .players; // get players in table
+
+        players.push(player); // add new player
 
         diesel::update(target)
-            .set(rooms::dsl::players.eq(vec![last_player, player]))
+            .set(rooms::dsl::players.eq(players)) // set updated players in table
             .get_result::<crate::models::Room>(&executor.context().db_con)
             .map(Into::into)
             .map_err(Into::into)
