@@ -19,7 +19,7 @@ code card-playroom-server
 `.env.example`ファイルを`.env`にコピーする
 
 ```bash
-cat .env.example > .env
+cat .env.example > .env # cp .env.example .env も可
 ```
 
 `diesel`のセットアップを行う．
@@ -34,7 +34,8 @@ diesel migration generate create_rooms
 ```sql
 CREATE TABLE rooms (
   id   SERIAL  PRIMARY KEY,
-  name VARCHAR NOT NULL
+  name VARCHAR NOT NULL,
+  players TEXT[] NOT NULL
 );
 ```
 
@@ -51,12 +52,24 @@ cargo run # local-container間の同期が早い場合
 cargo run --target-dir /tmp/target # local-container間の同期が遅い場合
 ```
 
-データ追加(createRoom)
+データ追加
+
+- createRoom(ルーム作成)
 
 ```graphql
 mutation {
-  createRoom(name: "hoge") {
-    id, name
+  createRoom(name: "hoge", player: "fuga") {
+    id, name, players
+  }
+}
+```
+
+- enterRoom(ルーム参加)
+
+```graphql
+mutation {
+  enterRoom(player: "fuga", roomId: 1) {
+    id, name, players
   }
 }
 ```
@@ -65,8 +78,22 @@ mutation {
 
 ```graphql
 query {
-  rooms{id, name}
+  rooms{id, name, players}
 }
 ```
 
 http://0.0.0.0:8080 にサーバーが建てられる．
+
+## データベースの変更と確認方法
+
+`up.sql`を変更した場合，以下のコマンドでデータベースの更新を行う．
+
+```bash
+diesel database reset
+```
+
+上記の変更後，`schema.rs`の変更が自動で行われ，以下のコマンドでデータベースのスキーマを確認できる．
+
+```bash
+diesel print-schema
+```
