@@ -11,5 +11,3 @@ RUN apt update \
     && apt clean -y \
     && rm -rf /var/lib/apt/lists/* \
     && cargo install diesel_cli --no-default-features --features postgres \
-
-ENV CARGO_TARGET_DIR=/tmp/target
