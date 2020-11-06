@@ -17,6 +17,10 @@ type Mutation {
     player: String!,
     room_id: Int!,  
   ): Room! @juniper(ownership: "owned")
+
+  removeRoom(
+    room_id: Int!
+  ): Room! @juniper(ownership: "owned")
 }
 
 type Room {

@@ -84,6 +84,22 @@ impl MutationFields for Mutation {
             .map(Into::into)
             .map_err(Into::into)
     }
+
+    fn field_remove_room(
+        &self,
+        executor: &Executor<'_, Context>,
+        _trail: &QueryTrail<'_, Room, Walked>,
+        room_id: i32,
+    ) -> FieldResult<Room> {
+        use crate::schema::rooms;
+
+        let target = rooms::table.find(room_id);
+
+        diesel::delete(target)
+            .get_result::<crate::models::Room>(&executor.context().db_con)
+            .map(Into::into)
+            .map_err(Into::into)
+    }
 }
 
 pub struct Room {
