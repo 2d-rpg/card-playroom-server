@@ -74,6 +74,16 @@ mutation {
 }
 ```
 
+- removeRoom(ルーム削除)
+
+```graphql
+mutation {
+  removeRoom(roomId: 2) {
+    id, name, players
+  }
+}
+```
+
 データ取得
 
 ```graphql
