@@ -16,7 +16,7 @@ type Mutation {
   enterRoom(
     player: String!,
     room_id: Int!,  
-  ): Room!
+  ): Room! @juniper(ownership: "owned")
 }
 
 type Room {

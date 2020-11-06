@@ -71,10 +71,13 @@ impl MutationFields for Mutation {
         use crate::schema::rooms;
 
         let target = rooms::table.find(room_id);
-        let last_player = target
+        let last_player: String = target
             .first::<crate::models::Room>(&executor.context().db_con)
             .unwrap()
-            .players[0];
+            .players
+            .get(0)
+            .expect("There is no player!")
+            .to_string();
 
         diesel::update(target)
             .set(rooms::dsl::players.eq(vec![last_player, player]))

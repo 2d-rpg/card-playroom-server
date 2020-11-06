@@ -25,8 +25,6 @@ pub type DbCon = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Set ENDPOINT from env var
-    let endpoint = dotenv::var("ENDPOINT").expect("ENDPOINT must be set in .env file!") + ":8080";
     // Set logger
     env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
     env_logger::init();
@@ -47,13 +45,13 @@ async fn main() -> std::io::Result<()> {
             // .service(web::resource("/ws/").route(web::get().to(ws_index)))
             .configure(graphql::register)
     })
-    .bind(endpoint)?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }
 
 fn create_db_pool() -> DbPool {
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     r2d2::Pool::builder()
         .max_size(3)
