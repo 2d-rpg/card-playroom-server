@@ -84,12 +84,6 @@ impl MutationFields for Mutation {
             .get_result::<crate::models::Room>(&executor.context().db_con)
             .map(Into::into)
             .map_err(Into::into)
-
-        // diesel::insert_into(rooms::table)
-        //     .values(&new_room)
-        //     .get_result::<crate::models::Room>(&executor.context().db_con)
-        //     .map(Into::into)
-        //     .map_err(Into::into)
     }
 }
 
