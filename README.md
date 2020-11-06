@@ -68,7 +68,7 @@ mutation {
 
 ```graphql
 mutation {
-  enterRoom(player: "fuga", roomId: 1) {
+  enterRoom(player: "piyo", roomId: 1) {
     id, name, players
   }
 }
