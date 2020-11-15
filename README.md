@@ -22,6 +22,11 @@ code card-playroom-server
 cat .env.example > .env # cp .env.example .env も可
 ```
 
+diesel_cli のインストール
+```bash
+cargo install diesel_cli --no-default-features --features postgres
+```
+
 `diesel`のセットアップを行う．
 
 ```bash
