@@ -16,6 +16,7 @@ use diesel::{
     r2d2::{self, ConnectionManager},
 };
 
+pub mod admin;
 pub mod graphql;
 pub mod models;
 pub mod schema;
@@ -44,6 +45,7 @@ async fn main() -> std::io::Result<()> {
             )
             // .service(web::resource("/ws/").route(web::get().to(ws_index)))
             .configure(graphql::register)
+            .configure(admin::register)
     })
     .bind("0.0.0.0:8080")?
     .run()
