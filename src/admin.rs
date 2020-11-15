@@ -1,13 +1,15 @@
-use actix_web::{web, HttpResponse};
-use juniper::http::playground::playground_source;
+use actix_web::{error, web, Error, HttpResponse};
+use tera::Tera;
 
-fn playground() -> HttpResponse {
-    let html = playground_source("");
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(html)
+async fn index(tmpl: web::Data<tera::Tera>) -> Result<HttpResponse, Error> {
+    let ctx = tera::Context::new();
+    let view = tmpl
+        .render("index.html", &ctx)
+        .map_err(|e| error::ErrorInternalServerError(e))?;
+    Ok(HttpResponse::Ok().content_type("text/html").body(view))
 }
 
 pub fn register(config: &mut web::ServiceConfig) {
-    config.route("/", web::get().to(playground));
+    let templates = Tera::new("templates/**/*").unwrap();
+    config.data(templates).route("/", web::get().to(index));
 }
