@@ -6,12 +6,18 @@
     カードのサーバーへのアップロード
 </p>
 <h2>表面</h2>
+<p>
+    {{ face_upload_comfirm }}
+</p>
 <form id="postForm" method="POST" action="/upload/face" enctype="multipart/form-data">
     <input type="file" name="img[]" id="article-img" multiple="multiple" accept="image/*">
     <button type="submit">アップロード</button>
 </form>
 
 <h2>裏面</h2>
+<p>
+    {{ back_upload_comfirm }}
+</p>
 <form id="postForm" method="POST" action="/upload/back" enctype="multipart/form-data">
     <input type="file" name="img[]" id="article-img" multiple="multiple" accept="image/*">
     <button type="submit">アップロード</button>
