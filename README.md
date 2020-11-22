@@ -57,6 +57,9 @@ cargo run # local-container間の同期が早い場合
 cargo run --target-dir /tmp/target # local-container間の同期が遅い場合
 ```
 
+http://0.0.0.0:8080 にサーバーが建てられる．
+http://127.0.0.1:8080 にアクセス．
+
 データ追加
 
 - createRoom(ルーム作成)
@@ -96,9 +99,6 @@ query {
   rooms{id, name, players}
 }
 ```
-
-http://0.0.0.0:8080 にサーバーが建てられる．
-http://127.0.0.1:8080 にアクセス．
 
 ## データベースの変更と確認方法
 

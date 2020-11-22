@@ -1,3 +1,4 @@
+use actix_files::Files;
 use actix_multipart::Multipart;
 use actix_web::{error, web, Error, HttpResponse};
 use futures::{StreamExt, TryStreamExt};
@@ -55,5 +56,6 @@ pub fn register(config: &mut web::ServiceConfig) {
         .route("/", web::get().to(index))
         .route("/upload", web::get().to(upload_page))
         .route("/upload/face", web::post().to(upload_face))
-        .route("/upload/back", web::post().to(upload_back));
+        .route("/upload/back", web::post().to(upload_back))
+        .service(Files::new("/assets", "assets").show_files_listing());
 }

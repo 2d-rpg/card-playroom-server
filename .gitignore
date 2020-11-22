@@ -15,3 +15,8 @@
 .env
 
 migrations/
+
+assets/back/*
+!assets/back/.gitkeep
+assets/face/*
+assets/face/.gitkeep
