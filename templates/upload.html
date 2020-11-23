@@ -5,21 +5,35 @@
 <p class="important">
     カードのサーバーへのアップロード
 </p>
-<h2>表面</h2>
+<h2>カードの追加</h2>
 <p>
     {{ face_upload_comfirm }}
 </p>
 <form id="postForm" method="POST" action="/upload/face" enctype="multipart/form-data">
-    <input type="file" name="img[]" id="article-img" multiple="multiple" accept="image/*">
-    <button type="submit">アップロード</button>
+    <div class="form-group">
+        <input type="file" class="form-control-file" name="img[]" id="faceImage" multiple="multiple" accept="image/*">
+        <select id="backImage" class="form-control">
+            <option selected>裏面画像</option>
+            {% for file_name in back_file_names %}
+            <option value="{{ file_name }}">{{ file_name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">アップロード</button>
+    </div>
 </form>
 
-<h2>裏面</h2>
+<h2>裏面画像の追加</h2>
 <p>
     {{ back_upload_comfirm }}
 </p>
 <form id="postForm" method="POST" action="/upload/back" enctype="multipart/form-data">
-    <input type="file" name="img[]" id="article-img" multiple="multiple" accept="image/*">
-    <button type="submit">アップロード</button>
+    <input type="file" name="img[]" id="backImage" multiple="multiple" accept="image/*">
+    <br>
+    <button type="submit" class="btn btn-primary">アップロード</button>
 </form>
+<p>
+    {% for file_name in back_file_names %}
+    {{ loop.index }}. {{ file_name }}
+    {% endfor %}
+</p>
 {% endblock content %}

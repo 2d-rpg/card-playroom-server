@@ -2,8 +2,30 @@ use actix_files::Files;
 use actix_multipart::Multipart;
 use actix_web::{error, web, Error, HttpResponse};
 use futures::{StreamExt, TryStreamExt};
+use std::fs;
 use std::io::Write;
 use tera::Tera;
+
+fn get_back_file_names() -> Vec<String> {
+    let paths = fs::read_dir("assets/back").unwrap();
+    let mut file_names: Vec<String> = Vec::new();
+    for path in paths {
+        let file_name = path
+            .unwrap()
+            .path()
+            .as_path()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned();
+        if file_name != ".gitkeep" {
+            file_names.push(file_name);
+        }
+    }
+    file_names.sort();
+    file_names
+}
 
 async fn index(tmpl: web::Data<tera::Tera>) -> Result<HttpResponse, Error> {
     let ctx = tera::Context::new();
@@ -17,6 +39,7 @@ async fn upload_page(tmpl: web::Data<tera::Tera>) -> Result<HttpResponse, Error>
     let mut ctx = tera::Context::new();
     ctx.insert("face_upload_comfirm", &"".to_owned());
     ctx.insert("back_upload_comfirm", &"".to_owned());
+    ctx.insert("back_file_names", &get_back_file_names().to_owned());
     let view = tmpl
         .render("upload.html", &ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -50,6 +73,7 @@ async fn upload_face(
         &"アップロードしました！！".to_owned(),
     );
     ctx.insert("back_upload_comfirm", &"".to_owned());
+    ctx.insert("back_file_names", &get_back_file_names().to_owned());
     let view = tmpl
         .render("upload.html", &ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -83,6 +107,7 @@ async fn upload_back(
         "back_upload_comfirm",
         &"アップロードしました！！".to_owned(),
     );
+    ctx.insert("back_file_names", &get_back_file_names().to_owned());
     let view = tmpl
         .render("upload.html", &ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
