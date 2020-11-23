@@ -1,40 +1,39 @@
 {% extends "base.html" %}
 {% block title %}デッキ管理{% endblock title %}
 {% block content %}
-<h1>カード アップロード</h1>
-<p class="important">
-    カードのサーバーへのアップロード
-</p>
-<h2>カードの追加</h2>
-<p>
-    {{ face_upload_comfirm }}
-</p>
-<form id="postForm" method="POST" action="/upload/face" enctype="multipart/form-data">
-    <div class="form-group">
-        <input type="file" class="form-control-file" name="img[]" id="faceImage" multiple="multiple" accept="image/*">
-        <select id="backImage" class="form-control">
-            <option selected>裏面画像</option>
-            <!-- TODO 裏面画像のサムネイル表示 -->
-            {% for file_name in back_file_names %}
-            <option value="{{ file_name }}">{{ file_name }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary">アップロード</button>
-    </div>
-</form>
+<div class="container">
+    <h1>カード アップロード</h1>
+    <p class="important">
+        カードのサーバーへのアップロード
+    </p>
+    <h2>カードの追加</h2>
+    <p>
+        {{ face_upload_comfirm }}
+    </p>
+    <form class="form-horizontal" id="postForm" method="POST" action="/upload/face" enctype="multipart/form-data">
+        <div class="form-group">
+            <input type="file" class="form-control-file" name="img[]" id="faceImage" multiple="multiple"
+                accept="image/*" required>
+            <label for="backImage" class="control-label">裏面画像:</label>
+            <select id="backImage" name="backImage" class="form-control" required>
+                <!-- TODO 裏面画像のサムネイル表示 -->
+                {% for file_name in back_file_names %}
+                <option value="{{ file_name }}">{{ file_name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">アップロード</button>
+        </div>
+    </form>
 
-<h2>裏面画像の追加</h2>
-<p>
-    {{ back_upload_comfirm }}
-</p>
-<form id="postForm" method="POST" action="/upload/back" enctype="multipart/form-data">
-    <input type="file" name="img[]" id="backImage" multiple="multiple" accept="image/*">
-    <br>
-    <button type="submit" class="btn btn-primary">アップロード</button>
-</form>
-<p>
-    {% for file_name in back_file_names %}
-    {{ loop.index }}. {{ file_name }}
-    {% endfor %}
-</p>
+    <h2>裏面画像の追加</h2>
+    <p>
+        {{ back_upload_comfirm }}
+    </p>
+    <form class="form-horizontal" id="postForm" method="POST" action="/upload/back" enctype="multipart/form-data">
+        <input type="file" class="form-control-file" name="img[]" id="backImage" multiple="multiple" accept="image/*"
+            required>
+        <br>
+        <button type="submit" class="btn btn-primary">アップロード</button>
+    </form>
+</div>
 {% endblock content %}
