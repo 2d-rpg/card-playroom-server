@@ -1,9 +1,12 @@
 use actix_files::Files;
 use actix_multipart::Multipart;
 use actix_web::{error, web, Error, HttpResponse};
+use diesel::prelude::*;
 use futures::{StreamExt, TryStreamExt};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Write;
+use std::str;
 use tera::Tera;
 
 fn get_back_file_names() -> Vec<String> {
@@ -46,27 +49,43 @@ async fn upload_page(tmpl: web::Data<tera::Tera>) -> Result<HttpResponse, Error>
     Ok(HttpResponse::Ok().content_type("text/html").body(view))
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct MyParams {
+    back_image: String,
+}
+
 async fn upload_face(
     tmpl: web::Data<tera::Tera>,
     mut payload: Multipart,
 ) -> Result<HttpResponse, Error> {
+    let mut face_img_file_names: Vec<String> = Vec::new();
+    let mut back_img_file_name: String = String::from("");
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
-        let filename = content_type.get_filename().unwrap();
-        // TODO ファイル名重複防止
-        let filepath = format!("assets/face/{}", sanitize_filename::sanitize(&filename));
-        // File::create is blocking operation, use threadpool
-        let mut f = web::block(|| std::fs::File::create(filepath))
-            .await
-            .unwrap();
-
-        // Field in turn is stream of *Bytes* object
-        while let Some(chunk) = field.next().await {
-            let data = chunk.unwrap();
-            // filesystem operations are blocking, we have to use threadpool
-            f = web::block(move || f.write_all(&data).map(|_| f)).await?;
+        if content_type.get_filename() != None {
+            // 画像ファイルの保存
+            let filename = content_type.get_filename().unwrap();
+            face_img_file_names.push(filename.to_string());
+            // TODO ファイル名重複防止
+            let filepath = format!("assets/face/{}", sanitize_filename::sanitize(&filename));
+            // File::create is blocking operation, use threadpool
+            let mut f = web::block(|| std::fs::File::create(filepath))
+                .await
+                .unwrap();
+            // Field in turn is stream of *Bytes* object
+            while let Some(chunk) = field.next().await {
+                let data = chunk.unwrap();
+                // filesystem operations are blocking, we have to use threadpool
+                f = web::block(move || f.write_all(&data).map(|_| f)).await?;
+            }
+        } else {
+            while let Some(chunk) = field.next().await {
+                let data = chunk.unwrap();
+                back_img_file_name = str::from_utf8(&data).unwrap().to_string();
+            }
         }
     }
+    for face_img_file_name in face_img_file_names {}
     let mut ctx = tera::Context::new();
     ctx.insert(
         "face_upload_comfirm",

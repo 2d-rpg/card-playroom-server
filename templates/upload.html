@@ -15,7 +15,7 @@
             <input type="file" class="form-control-file" name="img[]" id="faceImage" multiple="multiple"
                 accept="image/*" required>
             <label for="backImage" class="control-label">裏面画像:</label>
-            <select id="backImage" name="backImage" class="form-control" required>
+            <select id="backImage" name="back_image" class="form-control" required>
                 <!-- TODO 裏面画像のサムネイル表示 -->
                 {% for file_name in back_file_names %}
                 <option value="{{ file_name }}">{{ file_name }}</option>
