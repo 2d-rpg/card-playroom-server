@@ -1,4 +1,6 @@
+use super::schema::cards;
 use super::schema::rooms;
+use serde::Serialize;
 
 #[derive(Queryable)]
 pub struct Room {
@@ -14,16 +16,16 @@ pub struct NewRoom {
     pub players: Vec<String>,
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize)]
 pub struct Card {
     pub id: i32,
     pub face: String,
     pub back: String,
 }
 
-#[derive(Queryable)]
-pub struct Deck {
-    pub id: i32,
+#[derive(Insertable)]
+#[table_name = "cards"]
+pub struct NewCard {
     pub face: String,
     pub back: String,
 }

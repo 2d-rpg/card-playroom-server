@@ -2,6 +2,7 @@ use actix_files::Files;
 use actix_multipart::Multipart;
 use actix_web::{error, web, Error, HttpResponse};
 use diesel::prelude::*;
+use diesel::r2d2::{self, ConnectionManager};
 use futures::{StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -30,8 +31,17 @@ fn get_back_file_names() -> Vec<String> {
     file_names
 }
 
-async fn index(tmpl: web::Data<tera::Tera>) -> Result<HttpResponse, Error> {
-    let ctx = tera::Context::new();
+async fn index(
+    pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
+    tmpl: web::Data<tera::Tera>,
+) -> Result<HttpResponse, Error> {
+    let mut ctx = tera::Context::new();
+    use crate::schema::cards;
+    let conn = pool.get().expect("couldn't get db connection from pool");
+    let cards = cards::table
+        .load::<crate::models::Card>(&conn)
+        .expect("Error loading cards");
+    ctx.insert("cards", &cards);
     let view = tmpl
         .render("index.html", &ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -55,6 +65,7 @@ pub struct MyParams {
 }
 
 async fn upload_face(
+    pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
     tmpl: web::Data<tera::Tera>,
     mut payload: Multipart,
 ) -> Result<HttpResponse, Error> {
@@ -85,7 +96,18 @@ async fn upload_face(
             }
         }
     }
-    for face_img_file_name in face_img_file_names {}
+    use crate::schema::cards;
+    for face_img_file_name in face_img_file_names {
+        let new_card = crate::models::NewCard {
+            face: face_img_file_name,
+            back: String::from(&back_img_file_name),
+        };
+        let conn = pool.get().expect("couldn't get db connection from pool");
+        diesel::insert_into(cards::table)
+            .values(&new_card)
+            .execute(&conn)
+            .unwrap();
+    }
     let mut ctx = tera::Context::new();
     ctx.insert(
         "face_upload_comfirm",

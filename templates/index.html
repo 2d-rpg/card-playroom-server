@@ -6,5 +6,10 @@
     <p class="important">
         サーバーに保存されているカード一覧
     </p>
+    {% for card in cards %}
+    <p>
+        {{ card.face }}:{{ card.back }}
+    </p>
+    {% endfor %}
 </div>
 {% endblock content %}
