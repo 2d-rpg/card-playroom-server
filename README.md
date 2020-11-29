@@ -42,6 +42,13 @@ CREATE TABLE rooms (
   name VARCHAR NOT NULL,
   players TEXT[] NOT NULL
 );
+
+CREATE TABLE cards (
+  id   SERIAL PRIMARY KEY,
+  face VARCHAR NOT NULL,
+  back VARCHAR NOT NULL
+)
+
 ```
 
 データベース起動
