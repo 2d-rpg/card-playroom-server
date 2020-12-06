@@ -235,7 +235,7 @@ async fn deck(
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EditDeckFormParams {
-    action: String,
+    action: String, // "copy" or "delete"
     card_id: Vec<String>,
 }
 async fn edit_deck(
