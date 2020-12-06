@@ -1,3 +1,4 @@
+use super::schema::belongings;
 use super::schema::cards;
 use super::schema::decks;
 use super::schema::rooms;
@@ -17,11 +18,9 @@ pub struct NewRoom {
     pub players: Vec<String>,
 }
 
-#[derive(Identifiable, Queryable, Associations, Serialize)]
-#[belongs_to(Deck)]
+#[derive(Identifiable, Queryable, Serialize)]
 pub struct Card {
     pub id: i32,
-    pub deck_id: Option<i32>,
     pub face: String,
     pub back: String,
 }
@@ -29,7 +28,6 @@ pub struct Card {
 #[derive(Insertable)]
 #[table_name = "cards"]
 pub struct NewCard {
-    pub deck_id: Option<i32>,
     pub face: String,
     pub back: String,
 }
@@ -44,4 +42,20 @@ pub struct Deck {
 #[table_name = "decks"]
 pub struct NewDeck {
     pub name: String,
+}
+
+#[derive(Identifiable, Queryable, Serialize, Associations)]
+#[belongs_to(Deck)]
+#[belongs_to(Card)]
+pub struct Belonging {
+    pub id: i32,
+    pub deck_id: i32,
+    pub card_id: i32,
+}
+
+#[derive(Insertable)]
+#[table_name = "belongings"]
+pub struct NewBelonging {
+    pub deck_id: i32,
+    pub card_id: i32,
 }

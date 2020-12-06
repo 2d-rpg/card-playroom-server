@@ -1,7 +1,9 @@
-use crate::schema::{cards, decks};
+use crate::models::{Belonging, Card, Deck, NewBelonging, NewCard, NewDeck};
+use crate::schema::{belongings, cards, decks};
 use actix_files::Files;
 use actix_multipart::Multipart;
 use actix_web::{error, web, Error, HttpRequest, HttpResponse};
+use diesel::pg::expression::dsl::any;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use futures::{StreamExt, TryStreamExt};
@@ -39,7 +41,7 @@ async fn index(
     let mut ctx = tera::Context::new();
     let conn = pool.get().expect("couldn't get db connection from pool");
     let cards = cards::table
-        .load::<crate::models::Card>(&conn)
+        .load::<Card>(&conn)
         .expect("Error loading cards");
     ctx.insert("cards", &cards);
     let view = tmpl
@@ -97,8 +99,7 @@ async fn upload_face(
         }
     }
     for face_img_file_name in face_img_file_names {
-        let new_card = crate::models::NewCard {
-            deck_id: None,
+        let new_card = NewCard {
             face: face_img_file_name,
             back: String::from(&back_img_file_name),
         };
@@ -156,10 +157,10 @@ async fn all_cards(
     let conn = pool.get().expect("couldn't get db connection from pool");
     let mut ctx = tera::Context::new();
     let cards = cards::table
-        .load::<crate::models::Card>(&conn)
+        .load::<Card>(&conn)
         .expect("Error loading cards");
     let decks = decks::table
-        .load::<crate::models::Deck>(&conn)
+        .load::<Deck>(&conn)
         .expect("Error loading decks");
     ctx.insert("cards", &cards);
     ctx.insert("decks", &decks);
@@ -180,7 +181,7 @@ async fn add_deck(
     tmpl: web::Data<tera::Tera>,
     params: web::Form<AddDeckFormParams>,
 ) -> Result<HttpResponse, Error> {
-    let new_deck = crate::models::NewDeck {
+    let new_deck = NewDeck {
         name: String::from(&params.deck_name),
     };
     let conn = pool.get().expect("couldn't get db connection from pool");
@@ -190,10 +191,10 @@ async fn add_deck(
         .unwrap();
     let mut ctx = tera::Context::new();
     let cards = cards::table
-        .load::<crate::models::Card>(&conn)
+        .load::<Card>(&conn)
         .expect("Error loading cards");
     let decks = decks::table
-        .load::<crate::models::Deck>(&conn)
+        .load::<Deck>(&conn)
         .expect("Error loading decks");
     ctx.insert("cards", &cards);
     ctx.insert("decks", &decks);
@@ -215,13 +216,16 @@ async fn deck(
     let mut ctx = tera::Context::new();
     let selected_deck = decks::table
         .find(deck_id)
-        .first::<crate::models::Deck>(&conn)
+        .first::<Deck>(&conn)
         .expect("Error loading deck");
-    let cards = crate::models::Card::belonging_to(&selected_deck)
-        .load::<crate::models::Card>(&conn)
+    let card_ids_in_selected_deck =
+        Belonging::belonging_to(&selected_deck).select(belongings::card_id);
+    let cards = cards::table
+        .filter(cards::id.eq(any(card_ids_in_selected_deck)))
+        .load::<Card>(&conn)
         .expect("Error loading cards");
     let decks = decks::table
-        .load::<crate::models::Deck>(&conn)
+        .load::<Deck>(&conn)
         .expect("Error loading decks");
     ctx.insert("cards", &cards);
     ctx.insert("decks", &decks);
@@ -266,10 +270,10 @@ async fn edit_deck(
     let conn = pool.get().expect("couldn't get db connection from pool");
     let mut ctx = tera::Context::new();
     let cards = cards::table
-        .load::<crate::models::Card>(&conn)
+        .load::<Card>(&conn)
         .expect("Error loading cards");
     let decks = decks::table
-        .load::<crate::models::Deck>(&conn)
+        .load::<Deck>(&conn)
         .expect("Error loading decks");
     ctx.insert("cards", &cards);
     ctx.insert("decks", &decks);
