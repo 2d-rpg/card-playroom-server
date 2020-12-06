@@ -21,7 +21,7 @@ pub struct NewRoom {
 #[belongs_to(Deck)]
 pub struct Card {
     pub id: i32,
-    pub deck_id: i32,
+    pub deck_id: Option<i32>,
     pub face: String,
     pub back: String,
 }

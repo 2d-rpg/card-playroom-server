@@ -1,7 +1,7 @@
 table! {
     cards (id) {
         id -> Int4,
-        deck_id -> Int4,
+        deck_id -> Nullable<Int4>,
         face -> Varchar,
         back -> Varchar,
     }
