@@ -44,11 +44,16 @@ CREATE TABLE rooms (
 );
 
 CREATE TABLE cards (
-  id   SERIAL PRIMARY KEY,
-  face VARCHAR NOT NULL,
-  back VARCHAR NOT NULL
-)
+  id      SERIAL PRIMARY KEY,
+  card_id SERIAL NOT NULL,
+  face    VARCHAR NOT NULL,
+  back    VARCHAR NOT NULL
+);
 
+CREATE TABLE decks (
+  id      SERIAL PRIMARY KEY,
+  name    VARCHAR NOT NULL
+);
 ```
 
 データベース起動

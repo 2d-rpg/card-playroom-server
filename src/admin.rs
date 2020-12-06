@@ -99,6 +99,7 @@ async fn upload_face(
     use crate::schema::cards;
     for face_img_file_name in face_img_file_names {
         let new_card = crate::models::NewCard {
+            deck_id: None,
             face: face_img_file_name,
             back: String::from(&back_img_file_name),
         };
