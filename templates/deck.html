@@ -28,9 +28,10 @@
     {% endfor %}
     <h2>チェック対象操作</h2>
     <form class="form-horizontal" method="POST" action="/deck/edit" enctype="multipart/form-data">
+        <input type="hidden" name="selected_deck_id" value="{{ deck_id }}">
         <button type="submit" name="action" value="delete" class="btn btn-danger">削除</button>
         <div class="form-group w-25 m-0">
-            <select class="form-control">
+            <select class="form-control" name="deck_id">
                 {% for deck in decks %}
                 <option value="{{ deck.id }}">{{ deck.name }}</option>
                 {% endfor %}

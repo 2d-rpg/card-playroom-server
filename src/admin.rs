@@ -150,6 +150,7 @@ async fn upload_back(
     Ok(HttpResponse::Ok().content_type("text/html").body(view))
 }
 
+// デッキ
 async fn all_cards(
     pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
     tmpl: web::Data<tera::Tera>,
@@ -159,6 +160,9 @@ async fn all_cards(
     let cards = cards::table
         .load::<Card>(&conn)
         .expect("Error loading cards");
+    let belongings = belongings::table
+        .load::<Belonging>(&conn)
+        .expect("Error loading cards");
     let decks = decks::table
         .load::<Deck>(&conn)
         .expect("Error loading decks");
@@ -166,6 +170,7 @@ async fn all_cards(
     ctx.insert("decks", &decks);
     ctx.insert("add_deck_confirm", &"".to_owned());
     ctx.insert("deck_name", &"すべてのカード".to_owned());
+    ctx.insert("deck_id", &"-1".to_owned());
     let view = tmpl
         .render("deck.html", &ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -200,6 +205,7 @@ async fn add_deck(
     ctx.insert("decks", &decks);
     ctx.insert("add_deck_confirm", &"デッキを追加しました".to_owned());
     ctx.insert("deck_name", &"すべてのカード".to_owned());
+    ctx.insert("deck_id", &"-1".to_owned());
     let view = tmpl
         .render("deck.html", &ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -231,6 +237,7 @@ async fn deck(
     ctx.insert("decks", &decks);
     ctx.insert("add_deck_confirm", &"".to_owned());
     ctx.insert("deck_name", &selected_deck.name.to_owned());
+    ctx.insert("deck_id", &selected_deck.id.to_owned());
     let view = tmpl
         .render("deck.html", &ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -249,6 +256,8 @@ async fn edit_deck(
 ) -> Result<HttpResponse, Error> {
     let mut action: String = String::from("");
     let mut card_ids: Vec<i32> = Vec::new();
+    let mut deck_id: i32 = -1;
+    let mut selected_deck_id: i32 = -1;
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
         let name = content_type.get_name().unwrap();
@@ -263,22 +272,73 @@ async fn edit_deck(
                 let card_id = str::from_utf8(&data).unwrap().to_string();
                 card_ids.push(card_id.parse().unwrap());
             }
+        } else if name == "deck_id" {
+            while let Some(chunk) = field.next().await {
+                let data = chunk.unwrap();
+                deck_id = str::from_utf8(&data).unwrap().parse().unwrap();
+            }
+        } else if name == "selected_deck_id" {
+            while let Some(chunk) = field.next().await {
+                let data = chunk.unwrap();
+                selected_deck_id = str::from_utf8(&data).unwrap().parse().unwrap();
+            }
         }
     }
-    dbg!(action);
-    dbg!(card_ids);
     let conn = pool.get().expect("couldn't get db connection from pool");
     let mut ctx = tera::Context::new();
-    let cards = cards::table
-        .load::<Card>(&conn)
-        .expect("Error loading cards");
+    if action == "copy" {
+        for card_id in card_ids {
+            let new_belonging = NewBelonging {
+                deck_id: deck_id,
+                card_id: card_id,
+            };
+            diesel::insert_into(belongings::table)
+                .values(&new_belonging)
+                .execute(&conn)
+                .unwrap();
+        }
+    } else if action == "delete" {
+        for card_id in card_ids {
+            diesel::delete(
+                belongings::table.filter(
+                    belongings::deck_id
+                        .eq(selected_deck_id)
+                        .and(belongings::card_id.eq(card_id)),
+                ),
+            )
+            .execute(&conn)
+            .unwrap();
+        }
+    }
     let decks = decks::table
         .load::<Deck>(&conn)
         .expect("Error loading decks");
-    ctx.insert("cards", &cards);
-    ctx.insert("decks", &decks);
-    ctx.insert("add_deck_confirm", &"".to_owned());
-    ctx.insert("deck_name", &"すべてのカード".to_owned());
+    if selected_deck_id == -1 {
+        let cards = cards::table
+            .load::<Card>(&conn)
+            .expect("Error loading cards");
+        ctx.insert("cards", &cards);
+        ctx.insert("decks", &decks);
+        ctx.insert("add_deck_confirm", &"".to_owned());
+        ctx.insert("deck_name", &"すべてのカード".to_owned());
+        ctx.insert("deck_id", &selected_deck_id.to_owned());
+    } else {
+        let selected_deck = decks::table
+            .find(selected_deck_id)
+            .first::<Deck>(&conn)
+            .expect("Error loading deck");
+        let card_ids_in_selected_deck =
+            Belonging::belonging_to(&selected_deck).select(belongings::card_id);
+        let cards = cards::table
+            .filter(cards::id.eq(any(card_ids_in_selected_deck)))
+            .load::<Card>(&conn)
+            .expect("Error loading cards");
+        ctx.insert("cards", &cards);
+        ctx.insert("decks", &decks);
+        ctx.insert("add_deck_confirm", &"".to_owned());
+        ctx.insert("deck_name", &selected_deck.name.to_owned());
+        ctx.insert("deck_id", &selected_deck_id.to_owned());
+    }
     let view = tmpl
         .render("deck.html", &ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
