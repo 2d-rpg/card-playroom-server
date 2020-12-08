@@ -16,10 +16,12 @@ use diesel::{
     r2d2::{self, ConnectionManager},
 };
 
-pub mod admin;
+pub mod card;
+pub mod deck;
 pub mod graphql;
 pub mod models;
 pub mod schema;
+pub mod upload;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type DbCon = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
@@ -49,7 +51,9 @@ async fn main() -> std::io::Result<()> {
             )
             // .service(web::resource("/ws/").route(web::get().to(ws_index)))
             .configure(graphql::register)
-            .configure(admin::register)
+            .configure(card::register)
+            .configure(deck::register)
+            .configure(upload::register)
     })
     .bind("0.0.0.0:8080")?
     .run()
