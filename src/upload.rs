@@ -44,7 +44,7 @@ fn get_back_file_names() -> Vec<String> {
     file_names
 }
 
-async fn upload(tmpl: web::Data<tera::Tera>) -> Result<HttpResponse, Error> {
+async fn view_upload_screen(tmpl: web::Data<tera::Tera>) -> Result<HttpResponse, Error> {
     let mut ctx = tera::Context::new();
     let inserted_ctx = insert_to_ctx(&mut ctx, "", "", get_back_file_names());
     let view = tmpl
@@ -84,8 +84,8 @@ async fn upload_face(
     }
     for face_img_file_name in face_img_file_names {
         let new_card = NewCard {
-            face: face_img_file_name,
-            back: String::from(&back_img_file_name),
+            face: format!("face/{}", face_img_file_name),
+            back: format!("back/{}", String::from(&back_img_file_name)),
         };
         let conn = pool.get().expect("couldn't get db connection from pool");
         diesel::insert_into(cards::table)
@@ -130,7 +130,7 @@ pub fn register(config: &mut web::ServiceConfig) {
     let templates = Tera::new("templates/**/*").unwrap();
     config
         .data(templates)
-        .route("/upload", web::get().to(upload))
+        .route("/upload", web::get().to(view_upload_screen))
         .route("/upload/face", web::post().to(upload_face))
         .route("/upload/back", web::post().to(upload_back))
         .service(Files::new("/assets", "assets").show_files_listing());

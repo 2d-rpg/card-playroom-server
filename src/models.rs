@@ -1,7 +1,4 @@
-use super::schema::belongings;
-use super::schema::cards;
-use super::schema::decks;
-use super::schema::rooms;
+use super::schema::{belongings, cards, decks, rooms};
 use serde::Serialize;
 
 #[derive(Queryable)]
@@ -51,6 +48,7 @@ pub struct Belonging {
     pub id: i32,
     pub deck_id: i32,
     pub card_id: i32,
+    pub num: i32,
 }
 
 #[derive(Insertable)]
@@ -58,4 +56,5 @@ pub struct Belonging {
 pub struct NewBelonging {
     pub deck_id: i32,
     pub card_id: i32,
+    pub num: i32,
 }

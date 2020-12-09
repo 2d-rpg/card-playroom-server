@@ -3,6 +3,7 @@ table! {
         id -> Int4,
         deck_id -> Int4,
         card_id -> Int4,
+        num -> Int4,
     }
 }
 

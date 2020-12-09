@@ -19,7 +19,7 @@ fn insert_to_ctx(
     return ctx.clone();
 }
 
-async fn deck(
+async fn view_deck(
     pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
     tmpl: web::Data<tera::Tera>,
 ) -> Result<HttpResponse, Error> {
@@ -93,7 +93,7 @@ pub fn register(config: &mut web::ServiceConfig) {
     let templates = Tera::new("templates/**/*").unwrap();
     config
         .data(templates)
-        .route("/deck", web::get().to(deck))
+        .route("/deck", web::get().to(view_deck))
         .route("/deck/add", web::post().to(add_deck))
         .route("/deck/delete", web::post().to(delete_deck));
 }

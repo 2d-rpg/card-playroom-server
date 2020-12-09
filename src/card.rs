@@ -29,7 +29,38 @@ async fn index(
     Ok(HttpResponse::Ok().content_type("text/html").body(view))
 }
 
-// デッキ
+async fn delete_cards(
+    pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
+    tmpl: web::Data<tera::Tera>,
+    mut payload: Multipart,
+) -> Result<HttpResponse, Error> {
+    let mut card_ids: Vec<i32> = Vec::new();
+    while let Ok(Some(mut field)) = payload.try_next().await {
+        while let Some(chunk) = field.next().await {
+            let data = chunk.unwrap();
+            let card_id = str::from_utf8(&data).unwrap().to_string();
+            card_ids.push(card_id.parse().unwrap());
+        }
+    }
+    // TODO 本当に削除するか確認
+    // TODO belongings テーブルの処理
+    let conn = pool.get().expect("couldn't get db connection from pool");
+    for card_id in card_ids {
+        diesel::delete(cards::table.filter(cards::id.eq(card_id)))
+            .execute(&conn)
+            .unwrap();
+    }
+    let mut ctx = tera::Context::new();
+    let cards = cards::table
+        .load::<Card>(&conn)
+        .expect("Error loading cards");
+    ctx.insert("cards", &cards);
+    let view = tmpl
+        .render("index.html", &ctx)
+        .map_err(|e| error::ErrorInternalServerError(e))?;
+    Ok(HttpResponse::Ok().content_type("text/html").body(view))
+}
+
 async fn all_cards(
     pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
     tmpl: web::Data<tera::Tera>,
@@ -135,6 +166,7 @@ async fn edit_deck(
             let new_belonging = NewBelonging {
                 deck_id: deck_id,
                 card_id: card_id,
+                num: 1,
             };
             diesel::insert_into(belongings::table)
                 .values(&new_belonging)
@@ -191,6 +223,9 @@ async fn edit_deck(
 
 pub fn register(config: &mut web::ServiceConfig) {
     let templates = Tera::new("templates/**/*").unwrap();
-    config.data(templates).route("/", web::get().to(index));
+    config
+        .data(templates)
+        .route("/", web::get().to(index))
+        .route("/card/delete", web::get().to(delete_cards));
     // .route("/card/{deck_id}", web::get().to(card));
 }

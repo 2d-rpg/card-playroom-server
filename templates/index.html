@@ -6,10 +6,34 @@
     <p class="important">
         サーバーに保存されているカード一覧
     </p>
-    {% for card in cards %}
-    <p>
-        {{ card.face }}:{{ card.back }}
-    </p>
-    {% endfor %}
+    <a href="/card">デッキ編集</a>
+    <form class="form-horizontal" method="POST" action="/card/delete" enctype="multipart/form-data">
+        <button type="submit" class="btn btn-danger">削除</button>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">チェック</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">表画像</th>
+                    <th scope="col">裏画像</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for card in cards %}
+                <tr>
+                    <th>
+                        <div class="form-check">
+                            <input name="card_id[]" value="{{ card.id }}" class="form-check-input position-static"
+                                type="checkbox">
+                        </div>
+                    </th>
+                    <th>{{ card.id }}</th>
+                    <td><a href="/assets/face/{{ card.face }}">{{ card.face }}</td>
+                    <td><a href="/assets/face/{{ card.back }}">{{ card.back }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
 </div>
 {% endblock content %}
