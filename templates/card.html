@@ -84,8 +84,8 @@
                                 </div>
                             </th>
                             <th>{{ card.id }}</th>
-                            <td><a href="/assets/face/{{ card.face }}">{{ card.face }}</td>
-                            <td><a href="/assets/face/{{ card.back }}">{{ card.back }}</td>
+                            <td><a href="{{ card.face }}">{{ card.face }}</td>
+                            <td><a href="{{ card.back }}">{{ card.back }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
