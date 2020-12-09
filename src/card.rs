@@ -226,6 +226,6 @@ pub fn register(config: &mut web::ServiceConfig) {
     config
         .data(templates)
         .route("/", web::get().to(index))
-        .route("/card/delete", web::get().to(delete_cards));
+        .route("/card/delete", web::post().to(delete_cards));
     // .route("/card/{deck_id}", web::get().to(card));
 }
