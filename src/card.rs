@@ -1,3 +1,7 @@
+/**
+ * 全カードの閲覧，カードの削除処理
+ * http://localhost:8080/card
+ */
 use crate::models::Card;
 use crate::schema::cards;
 use actix_multipart::Multipart;

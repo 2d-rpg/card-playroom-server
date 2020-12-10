@@ -1,3 +1,7 @@
+/**
+ * 画像のアップロード処理
+ * http://localhost:8080/upload
+ */
 use crate::models::NewCard;
 use crate::schema::cards;
 use actix_files::Files;

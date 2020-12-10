@@ -1,3 +1,7 @@
+/**
+ * デッキの作成，削除処理
+ * http://localhost:8080/deck
+ */
 use crate::models::{Deck, NewDeck};
 use crate::schema::decks;
 use actix_web::{error, web, Error, HttpResponse};

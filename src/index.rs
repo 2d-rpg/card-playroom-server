@@ -1,3 +1,7 @@
+/**
+ * 管理画面のトップページ
+ * http://localhost:8080
+ */
 use actix_web::{error, web, Error, HttpResponse};
 use tera::Tera;
 

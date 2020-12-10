@@ -1,3 +1,7 @@
+/**
+ * デッキ編集処理
+ * http://localhost:8080/edit-deck
+ */
 use crate::models::{Belonging, Card, Deck, NewBelonging, NewCard, NewDeck};
 use crate::schema::{belongings, cards, decks};
 use actix_files::Files;
