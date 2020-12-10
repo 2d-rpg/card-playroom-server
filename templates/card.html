@@ -1,97 +1,39 @@
 {% extends "base.html" %}
-{% block title %}デッキ編集{% endblock title %}
+{% block title %}カード管理{% endblock title %}
 {% block content %}
 <div class="container">
-    <h1>デッキ編集</h1>
+    <h1>カード管理</h1>
     <p class="important">
-        サーバー内のデッキを編集
+        サーバーに保存されているカード一覧
     </p>
-    <div class="row">
-        <div class="col-sm">
-            <h2>カード一覧</h2>
-            <form class="form-horizontal" method="POST" action="/deck/edit" enctype="multipart/form-data">
-                <input type="hidden" name="selected_deck_id" value="{{ deck_id }}">
-                <button type="submit" name="action" value="delete" class="btn btn-danger">削除</button>
-                <div class="form-group w-25 m-0">
-                    <select class="form-control" name="deck_id">
-                        {% for deck in decks %}
-                        <option value="{{ deck.id }}">{{ deck.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                に
-                <button type="submit" name="action" value="copy" class="btn btn-primary">コピー</button>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">チェック</th>
-                            <th scope="col">ID</th>
-                            <th scope="col">表画像</th>
-                            <th scope="col">裏画像</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for card in cards %}
-                        <tr>
-                            <th>
-                                <div class="form-check">
-                                    <input name="card_id[]" value="{{ card.id }}"
-                                        class="form-check-input position-static" type="checkbox">
-                                </div>
-                            </th>
-                            <th>{{ card.id }}</th>
-                            <td><a href="/assets/face/{{ card.face }}">{{ card.face }}</td>
-                            <td><a href="/assets/face/{{ card.back }}">{{ card.back }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </form>
-        </div>
-        <div class="col-sm">
-            <h2>{{ deck_name }}</h2>
-            {% for deck in decks %}
-            <a href="/card/{{ deck.id }}">{{ deck.name }}</a>
-            {% endfor %}
-            <form class="form-horizontal" method="POST" action="/deck/edit" enctype="multipart/form-data">
-                <input type="hidden" name="selected_deck_id" value="{{ deck_id }}">
-                <button type="submit" name="action" value="delete" class="btn btn-danger">削除</button>
-                <div class="form-group w-25 m-0">
-                    <select class="form-control" name="deck_id">
-                        {% for deck in decks %}
-                        <option value="{{ deck.id }}">{{ deck.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                に
-                <button type="submit" name="action" value="copy" class="btn btn-primary">コピー</button>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">チェック</th>
-                            <th scope="col">ID</th>
-                            <th scope="col">表画像</th>
-                            <th scope="col">裏画像</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for card in cards %}
-                        <tr>
-                            <th>
-                                <div class="form-check">
-                                    <input name="card_id[]" value="{{ card.id }}"
-                                        class="form-check-input position-static" type="checkbox">
-                                </div>
-                            </th>
-                            <th>{{ card.id }}</th>
-                            <td><a href="{{ card.face }}">{{ card.face }}</td>
-                            <td><a href="{{ card.back }}">{{ card.back }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </form>
-        </div>
-    </div>
+    <a href="/card">デッキ編集</a>
+    <form class="form-horizontal" method="POST" action="/card/delete" enctype="multipart/form-data">
+        <button type="submit" class="btn btn-danger">削除</button>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">チェック</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">表画像</th>
+                    <th scope="col">裏画像</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for card in cards %}
+                <tr>
+                    <th>
+                        <div class="form-check">
+                            <input name="card_id[]" value="{{ card.id }}" class="form-check-input position-static"
+                                type="checkbox">
+                        </div>
+                    </th>
+                    <th>{{ card.id }}</th>
+                    <td><a href="{{ card.face }}">{{ card.face }}</td>
+                    <td><a href="{{ card.back }}">{{ card.back }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
 </div>
 {% endblock content %}

@@ -18,7 +18,9 @@ use diesel::{
 
 pub mod card;
 pub mod deck;
+pub mod edit_deck;
 pub mod graphql;
+pub mod index;
 pub mod models;
 pub mod schema;
 pub mod upload;
@@ -51,7 +53,9 @@ async fn main() -> std::io::Result<()> {
             )
             // .service(web::resource("/ws/").route(web::get().to(ws_index)))
             .configure(graphql::register)
+            .configure(index::register)
             .configure(card::register)
+            .configure(edit_deck::register)
             .configure(deck::register)
             .configure(upload::register)
     })
