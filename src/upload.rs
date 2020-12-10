@@ -84,8 +84,8 @@ async fn upload_face(
     }
     for face_img_file_name in face_img_file_names {
         let new_card = NewCard {
-            face: format!("assets/face/{}", face_img_file_name),
-            back: format!("assets/back/{}", String::from(&back_img_file_name)),
+            face: format!("/assets/face/{}", face_img_file_name),
+            back: format!("/assets/back/{}", String::from(&back_img_file_name)),
         };
         let conn = pool.get().expect("couldn't get db connection from pool");
         diesel::insert_into(cards::table)

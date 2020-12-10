@@ -13,6 +13,14 @@ use std::io::Write;
 use std::str;
 use tera::Tera;
 
+#[derive(Serialize)]
+struct CardInfoInDeck {
+    card_id: i32,
+    face: String,
+    back: String,
+    num: i32,
+}
+
 fn insert_to_ctx(
     ctx: &mut tera::Context,
     cards: std::vec::Vec<Card>,
@@ -20,7 +28,7 @@ fn insert_to_ctx(
     decks: std::vec::Vec<Deck>,
     optional_selected_deck: Option<Deck>,
     edit_deck_confirm: &str,
-    cards_in_deck: std::vec::Vec<Card>,
+    cards_in_deck: std::vec::Vec<CardInfoInDeck>,
 ) -> tera::Context {
     ctx.insert("cards", &cards);
     ctx.insert("is_deck_selected", &is_deck_selected);
@@ -66,10 +74,25 @@ async fn view_edit_deck_screen(
             .expect("Error loading deck");
         let card_ids_in_selected_deck =
             Belonging::belonging_to(&selected_deck).select(belongings::card_id);
-        let cards_in_selected_deck = cards::table
+        let mut cards_in_selected_deck = cards::table
             .filter(cards::id.eq(any(card_ids_in_selected_deck)))
             .load::<Card>(&conn)
             .expect("Error loading cards");
+        let card_nums_in_selected_deck = Belonging::belonging_to(&selected_deck)
+            .select(belongings::num)
+            .load::<i32>(&conn)
+            .expect("Error loading belongings");
+        let mut cards_info_in_selected_deck = Vec::new();
+        for i in 0..cards_in_selected_deck.len() {
+            let card_in_selected_deck = cards_in_selected_deck.pop().unwrap();
+            let card_info_in_selected_deck = CardInfoInDeck {
+                card_id: card_in_selected_deck.id,
+                face: card_in_selected_deck.face,
+                back: card_in_selected_deck.back,
+                num: card_nums_in_selected_deck[i],
+            };
+            cards_info_in_selected_deck.push(card_info_in_selected_deck);
+        }
         let inserted_ctx = insert_to_ctx(
             &mut ctx,
             cards,
@@ -77,7 +100,7 @@ async fn view_edit_deck_screen(
             decks,
             Some(selected_deck),
             "",
-            cards_in_selected_deck,
+            cards_info_in_selected_deck,
         );
         let view = tmpl
             .render("edit-deck.html", &inserted_ctx)
@@ -86,37 +109,6 @@ async fn view_edit_deck_screen(
     }
 }
 
-async fn all_cards(
-    pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
-    tmpl: web::Data<tera::Tera>,
-) -> Result<HttpResponse, Error> {
-    let conn = pool.get().expect("couldn't get db connection from pool");
-    let mut ctx = tera::Context::new();
-    let cards = cards::table
-        .load::<Card>(&conn)
-        .expect("Error loading cards");
-    let belongings = belongings::table
-        .load::<Belonging>(&conn)
-        .expect("Error loading cards");
-    let decks = decks::table
-        .load::<Deck>(&conn)
-        .expect("Error loading decks");
-    ctx.insert("cards", &cards);
-    ctx.insert("decks", &decks);
-    ctx.insert("add_deck_confirm", &"".to_owned());
-    ctx.insert("deck_name", &"すべてのカード".to_owned());
-    ctx.insert("deck_id", &"-1".to_owned());
-    let view = tmpl
-        .render("deck.html", &ctx)
-        .map_err(|e| error::ErrorInternalServerError(e))?;
-    Ok(HttpResponse::Ok().content_type("text/html").body(view))
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct EditDeckFormParams {
-    action: String, // "copy" or "delete"
-    card_id: Vec<String>,
-}
 async fn edit_deck(
     pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
     tmpl: web::Data<tera::Tera>,

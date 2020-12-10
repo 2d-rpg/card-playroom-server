@@ -22,9 +22,9 @@
                     {% for card in cards %}
                     <tr>
                         <td>{{ card.id }}</td>
-                        <td><a href="/assets/face/{{ card.face }}">{{ card.face }}</td>
-                        <td><a href="/assets/face/{{ card.back }}">{{ card.back }}</td>
-                        <td><button class="btn btn-primary">右</button></td>
+                        <td><a href="{{ card.face }}">{{ card.face }}</td>
+                        <td><a href="{{ card.back }}">{{ card.back }}</td>
+                        <td><button class="btn btn-primary">＞</button></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -41,7 +41,7 @@
             {% for deck in decks %}
             <a href="/edit-deck/{{ deck.id }}">{{ deck.name }}</a>
             {% endfor %}
-            <form class="form-horizontal" method="POST" action="/deck/edit" enctype="multipart/form-data">
+            <form class="form-horizontal" method="POST" action="/edit-deck/complete" enctype="multipart/form-data">
                 <input type="hidden" name="selected_deck_id" value="{{ selected_deck_id }}">
                 <button type="submit" class="btn btn-primary">編集完了</button>
                 <p>
@@ -60,7 +60,7 @@
                     <tbody>
                         {% for card_in_deck in cards_in_deck %}
                         <tr>
-                            <td><button class="btn btn-primary">左</button></td>
+                            <td><button class="btn btn-primary">＜</button></td>
                             <td>{{ card_in_deck.id }}</td>
                             <td><a href="{{ card_in_deck.face }}">{{ card_in_deck.face }}</td>
                             <td><a href="{{ card_in_deck.back }}">{{ card_in_deck.back }}</td>
