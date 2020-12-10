@@ -13,6 +13,79 @@ use std::io::Write;
 use std::str;
 use tera::Tera;
 
+fn insert_to_ctx(
+    ctx: &mut tera::Context,
+    cards: std::vec::Vec<Card>,
+    is_deck_selected: bool,
+    decks: std::vec::Vec<Deck>,
+    optional_selected_deck: Option<Deck>,
+    edit_deck_confirm: &str,
+    cards_in_deck: std::vec::Vec<Card>,
+) -> tera::Context {
+    ctx.insert("cards", &cards);
+    ctx.insert("is_deck_selected", &is_deck_selected);
+    ctx.insert("decks", &decks);
+    if optional_selected_deck.is_some() {
+        let selected_deck = optional_selected_deck.unwrap();
+        ctx.insert("selected_deck_id", &selected_deck.id);
+        ctx.insert("selected_deck_name", &selected_deck.name);
+    } else {
+        ctx.insert("selected_deck_id", &"");
+        ctx.insert("selected_deck_name", &"");
+    }
+    ctx.insert("edit_deck_confirm", &edit_deck_confirm);
+    ctx.insert("cards_in_deck", &cards_in_deck);
+    return ctx.clone();
+}
+
+async fn view_edit_deck_screen(
+    req: HttpRequest,
+    pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
+    tmpl: web::Data<tera::Tera>,
+) -> Result<HttpResponse, Error> {
+    let optional_deck_id = req.match_info().get("deck_id");
+    let conn = pool.get().expect("couldn't get db connection from pool");
+    let mut ctx = tera::Context::new();
+    let cards = cards::table
+        .load::<Card>(&conn)
+        .expect("Error loading cards");
+    let decks = decks::table
+        .load::<Deck>(&conn)
+        .expect("Error loading decks");
+    if optional_deck_id.is_none() {
+        let inserted_ctx = insert_to_ctx(&mut ctx, cards, false, decks, None, "", Vec::new());
+        let view = tmpl
+            .render("edit-deck.html", &inserted_ctx)
+            .map_err(|e| error::ErrorInternalServerError(e))?;
+        return Ok(HttpResponse::Ok().content_type("text/html").body(view));
+    } else {
+        let deck_id: i32 = optional_deck_id.unwrap().parse().unwrap();
+        let selected_deck = decks::table
+            .find(deck_id)
+            .first::<Deck>(&conn)
+            .expect("Error loading deck");
+        let card_ids_in_selected_deck =
+            Belonging::belonging_to(&selected_deck).select(belongings::card_id);
+        let cards_in_selected_deck = cards::table
+            .filter(cards::id.eq(any(card_ids_in_selected_deck)))
+            .load::<Card>(&conn)
+            .expect("Error loading cards");
+        let inserted_ctx = insert_to_ctx(
+            &mut ctx,
+            cards,
+            true,
+            decks,
+            Some(selected_deck),
+            "",
+            cards_in_selected_deck,
+        );
+        let view = tmpl
+            .render("edit-deck.html", &inserted_ctx)
+            .map_err(|e| error::ErrorInternalServerError(e))?;
+        return Ok(HttpResponse::Ok().content_type("text/html").body(view));
+    }
+}
+
 async fn all_cards(
     pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
     tmpl: web::Data<tera::Tera>,
@@ -33,38 +106,6 @@ async fn all_cards(
     ctx.insert("add_deck_confirm", &"".to_owned());
     ctx.insert("deck_name", &"すべてのカード".to_owned());
     ctx.insert("deck_id", &"-1".to_owned());
-    let view = tmpl
-        .render("deck.html", &ctx)
-        .map_err(|e| error::ErrorInternalServerError(e))?;
-    Ok(HttpResponse::Ok().content_type("text/html").body(view))
-}
-
-async fn deck(
-    req: HttpRequest,
-    pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
-    tmpl: web::Data<tera::Tera>,
-) -> Result<HttpResponse, Error> {
-    let deck_id: i32 = req.match_info().get("deck_id").unwrap().parse().unwrap();
-    let conn = pool.get().expect("couldn't get db connection from pool");
-    let mut ctx = tera::Context::new();
-    let selected_deck = decks::table
-        .find(deck_id)
-        .first::<Deck>(&conn)
-        .expect("Error loading deck");
-    let card_ids_in_selected_deck =
-        Belonging::belonging_to(&selected_deck).select(belongings::card_id);
-    let cards = cards::table
-        .filter(cards::id.eq(any(card_ids_in_selected_deck)))
-        .load::<Card>(&conn)
-        .expect("Error loading cards");
-    let decks = decks::table
-        .load::<Deck>(&conn)
-        .expect("Error loading decks");
-    ctx.insert("cards", &cards);
-    ctx.insert("decks", &decks);
-    ctx.insert("add_deck_confirm", &"".to_owned());
-    ctx.insert("deck_name", &selected_deck.name.to_owned());
-    ctx.insert("deck_id", &selected_deck.id.to_owned());
     let view = tmpl
         .render("deck.html", &ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -177,7 +218,6 @@ pub fn register(config: &mut web::ServiceConfig) {
     let templates = Tera::new("templates/**/*").unwrap();
     config
         .data(templates)
-        .route("/card", web::get().to(view_card))
-        .route("/card/delete", web::post().to(delete_cards));
-    // .route("/card/{deck_id}", web::get().to(card));
+        .route("/edit-deck", web::get().to(view_edit_deck_screen))
+        .route("/edit-deck/{deck_id}", web::get().to(view_edit_deck_screen));
 }
