@@ -41,7 +41,6 @@ async fn delete_cards(
             card_ids.push(card_id.parse().unwrap());
         }
     }
-    // TODO 本当に削除するか確認
     let conn = pool.get().expect("couldn't get db connection from pool");
     for card_id in card_ids {
         diesel::delete(belongings::table.filter(belongings::card_id.eq(card_id)))

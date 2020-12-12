@@ -30,8 +30,19 @@
                     {% endfor %}
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">削除</button>
+            <button type="submit" id="deleteDeckButton" class="btn btn-primary">削除</button>
         </div>
     </form>
 </div>
+<script>
+    window.onload = function () {
+        const deleteButton = document.getElementById("deleteDeckButton");
+        deleteButton.addEventListener("click", function (event) {
+            const isConfirmed = confirm("本当に削除しますか？");
+            if (!isConfirmed) {
+                event.preventDefault();
+            }
+        });
+    };
+</script>
 {% endblock content %}

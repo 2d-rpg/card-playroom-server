@@ -89,7 +89,6 @@ async fn delete_deck(
     tmpl: web::Data<tera::Tera>,
     params: web::Form<DeleteDeckFormParams>,
 ) -> Result<HttpResponse, Error> {
-    // TODO 本当に削除するか確認
     let conn = pool.get().expect("couldn't get db connection from pool");
     diesel::delete(belongings::table.filter(belongings::deck_id.eq(params.deck_id)))
         .execute(&conn)

@@ -8,7 +8,7 @@
     </p>
     <a href="/card">デッキ編集</a>
     <form class="form-horizontal" method="POST" action="/card/delete" enctype="multipart/form-data">
-        <button type="submit" class="btn btn-danger">削除</button>
+        <button type="submit" id="deleteCardsButton" class="btn btn-danger">削除</button>
         <table class="table">
             <thead>
                 <tr>
@@ -36,4 +36,15 @@
         </table>
     </form>
 </div>
+<script>
+    window.onload = function () {
+        const deleteButton = document.getElementById("deleteCardsButton");
+        deleteButton.addEventListener("click", function (event) {
+            const isConfirmed = confirm("本当に削除しますか？");
+            if (!isConfirmed) {
+                event.preventDefault();
+            }
+        });
+    };
+</script>
 {% endblock content %}
