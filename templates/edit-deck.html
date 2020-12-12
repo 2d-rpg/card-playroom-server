@@ -2,12 +2,12 @@
 {% block title %}デッキ編集{% endblock title %}
 {% block content %}
 <div class="container-fluid">
-    <h1>デッキ編集</h1>
-    <p class="important">
-        サーバー内のデッキを編集
-    </p>
     <div class="row">
         <div class="col-sm-6">
+            <h1>デッキ編集</h1>
+            <p class="important">
+                サーバー内のデッキを編集
+            </p>
             <h2>カード一覧</h2>
             <table class="table">
                 <thead>
@@ -35,21 +35,37 @@
         <div class="col-sm-6">
             {% if not is_deck_selected %}
             <h2>デッキを選択してください</h2>
-            {% for deck in decks %}
-            <a href="/edit-deck/{{ deck.id }}">{{ deck.name }}</a>
-            {% endfor %}
+            <div class="form-group w-25 m-0">
+                <select id="deckSelect" class="form-control" name="deck_id">
+                    {% for deck in decks %}
+                    {% if deck.id == selected_deck_id %}
+                    <option value="{{ deck.id }}" selected>{{ deck.name }}</option>
+                    {% else %}
+                    <option value="{{ deck.id }}">{{ deck.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
             {% else %}
             <h2>{{ selected_deck_name }}のカード一覧</h2>
-            {% for deck in decks %}
-            <a href="/edit-deck/{{ deck.id }}">{{ deck.name }}</a>
-            {% endfor %}
+            <div class="form-group w-25 m-0">
+                <select id="deckSelect" class="form-control" name="deck_id">
+                    {% for deck in decks %}
+                    {% if deck.id == selected_deck_id %}
+                    <option value="{{ deck.id }}" selected>{{ deck.name }}</option>
+                    {% else %}
+                    <option value="{{ deck.id }}">{{ deck.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
             <form class="form-horizontal" method="POST" action="/edit-deck/complete" enctype="multipart/form-data">
                 <input type="hidden" name="selected_deck_id" value="{{ selected_deck_id }}">
                 <button type="submit" class="btn btn-success">編集完了</button>
                 <p>
                     {{ edit_deck_confirm }}
                 </p>
-                <table class="table" id="cardsInDeck">
+                <table class="table" id="cardsInDeck" style="margin-top: 1.25rem!important;">
                     <thead>
                         <tr>
                             <th scope="col">削除</th>
@@ -82,6 +98,13 @@
 </div>
 <script>
     window.onload = function () {
+        // 編集するデッキの変更
+        const deckSelect = document.getElementById("deckSelect");
+        deckSelect.addEventListener("change", function (event) {
+            const deckId = event.target.value;
+            window.location.href = `/edit-deck/${deckId}`;
+        });
+
         // デッキにカードを追加
         const moveButtons = document.querySelectorAll(".card-move-button");
         moveButtons.forEach(button => {
