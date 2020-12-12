@@ -6,6 +6,9 @@
     <p class="important">
         サーバーに保存されているカード一覧
     </p>
+    <p>
+        {{ delete_cards_confirm }}
+    </p>
     <form class="form-horizontal" method="POST" action="/card/delete" enctype="multipart/form-data">
         <button type="submit" id="deleteCardsButton" class="btn btn-danger">削除</button>
         <table class="table">

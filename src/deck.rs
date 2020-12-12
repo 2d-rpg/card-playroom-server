@@ -13,10 +13,13 @@ use tera::Tera;
 
 fn insert_to_ctx(
     ctx: &mut tera::Context,
-    decks: Vec<Deck>,
+    conn: diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::PgConnection>>,
     add_deck_confirm: &str,
     delete_deck_confirm: &str,
 ) -> tera::Context {
+    let decks = decks::table
+        .load::<Deck>(&conn)
+        .expect("Error loading decks");
     ctx.insert("decks", &decks);
     ctx.insert("add_deck_confirm", add_deck_confirm);
     ctx.insert("delete_deck_confirm", delete_deck_confirm);
@@ -29,10 +32,7 @@ async fn view_deck(
 ) -> Result<HttpResponse, Error> {
     let conn = pool.get().expect("couldn't get db connection from pool");
     let mut ctx = tera::Context::new();
-    let decks = decks::table
-        .load::<Deck>(&conn)
-        .expect("Error loading decks");
-    let inserted_ctx = insert_to_ctx(&mut ctx, decks, "", "");
+    let inserted_ctx = insert_to_ctx(&mut ctx, conn, "", "");
     let view = tmpl
         .render("deck.html", &inserted_ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -60,19 +60,13 @@ async fn add_deck(
             .values(&new_deck)
             .execute(&conn)
             .unwrap();
-        let decks = decks::table
-            .load::<Deck>(&conn)
-            .expect("Error loading decks");
-        let inserted_ctx = insert_to_ctx(&mut ctx, decks, "デッキを追加しました", "");
+        let inserted_ctx = insert_to_ctx(&mut ctx, conn, "デッキを追加しました", "");
         let view = tmpl
             .render("deck.html", &inserted_ctx)
             .map_err(|e| error::ErrorInternalServerError(e))?;
         return Ok(HttpResponse::Ok().content_type("text/html").body(view));
     } else {
-        let decks = decks::table
-            .load::<Deck>(&conn)
-            .expect("Error loading decks");
-        let inserted_ctx = insert_to_ctx(&mut ctx, decks, "その名前のデッキは既に存在します", "");
+        let inserted_ctx = insert_to_ctx(&mut ctx, conn, "その名前のデッキは既に存在します", "");
         let view = tmpl
             .render("deck.html", &inserted_ctx)
             .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -97,10 +91,7 @@ async fn delete_deck(
         .execute(&conn)
         .unwrap();
     let mut ctx = tera::Context::new();
-    let decks = decks::table
-        .load::<Deck>(&conn)
-        .expect("Error loading decks");
-    let inserted_ctx = insert_to_ctx(&mut ctx, decks, "", "デッキを削除しました");
+    let inserted_ctx = insert_to_ctx(&mut ctx, conn, "", "デッキを削除しました");
     let view = tmpl
         .render("deck.html", &inserted_ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;

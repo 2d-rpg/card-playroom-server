@@ -12,18 +12,28 @@ use futures::{StreamExt, TryStreamExt};
 use std::str;
 use tera::Tera;
 
+fn insert_to_ctx(
+    ctx: &mut tera::Context,
+    conn: diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::PgConnection>>,
+    delete_cards_confirm: &str,
+) -> tera::Context {
+    let cards = cards::table
+        .load::<Card>(&conn)
+        .expect("Error loading cards");
+    ctx.insert("cards", &cards);
+    ctx.insert("delete_cards_confirm", delete_cards_confirm);
+    return ctx.clone();
+}
+
 async fn view_card(
     pool: web::Data<r2d2::Pool<ConnectionManager<PgConnection>>>,
     tmpl: web::Data<tera::Tera>,
 ) -> Result<HttpResponse, Error> {
     let mut ctx = tera::Context::new();
     let conn = pool.get().expect("couldn't get db connection from pool");
-    let cards = cards::table
-        .load::<Card>(&conn)
-        .expect("Error loading cards");
-    ctx.insert("cards", &cards);
+    let inserted_ctx = insert_to_ctx(&mut ctx, conn, "");
     let view = tmpl
-        .render("card.html", &ctx)
+        .render("card.html", &inserted_ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
     Ok(HttpResponse::Ok().content_type("text/html").body(view))
 }
@@ -51,12 +61,9 @@ async fn delete_cards(
             .unwrap();
     }
     let mut ctx = tera::Context::new();
-    let cards = cards::table
-        .load::<Card>(&conn)
-        .expect("Error loading cards");
-    ctx.insert("cards", &cards);
+    let inserted_ctx = insert_to_ctx(&mut ctx, conn, "カードを削除しました");
     let view = tmpl
-        .render("card.html", &ctx)
+        .render("card.html", &inserted_ctx)
         .map_err(|e| error::ErrorInternalServerError(e))?;
     Ok(HttpResponse::Ok().content_type("text/html").body(view))
 }
