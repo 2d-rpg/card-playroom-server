@@ -24,7 +24,7 @@
     <form class="form-horizontal" method="POST" action="/deck/delete">
         <div class="form-group">
             <div class="form-group w-25 m-0">
-                <select class="form-control" name="deck_id">
+                <select class="form-control" name="deck_id" required>
                     {% for deck in decks %}
                     <option value="{{ deck.id }}">{{ deck.name }}</option>
                     {% endfor %}

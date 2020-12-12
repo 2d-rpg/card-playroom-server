@@ -34,18 +34,8 @@
         </div>
         <div class="col-sm-6">
             {% if not is_deck_selected %}
-            <h2>デッキを選択してください</h2>
-            <div class="form-group w-25 m-0">
-                <select id="deckSelect" class="form-control" name="deck_id">
-                    {% for deck in decks %}
-                    {% if deck.id == selected_deck_id %}
-                    <option value="{{ deck.id }}" selected>{{ deck.name }}</option>
-                    {% else %}
-                    <option value="{{ deck.id }}">{{ deck.name }}</option>
-                    {% endif %}
-                    {% endfor %}
-                </select>
-            </div>
+            <h2>デッキを作成してください</h2>
+            <a href="/deck">デッキ作成</a>
             {% else %}
             <h2>{{ selected_deck_name }}のカード一覧</h2>
             <div class="form-group w-25 m-0">

@@ -13,7 +13,7 @@ use tera::Tera;
 
 fn insert_to_ctx(
     ctx: &mut tera::Context,
-    decks: std::vec::Vec<Deck>,
+    decks: Vec<Deck>,
     add_deck_confirm: &str,
     delete_deck_confirm: &str,
 ) -> tera::Context {
