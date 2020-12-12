@@ -48,24 +48,36 @@ async fn add_deck(
     tmpl: web::Data<tera::Tera>,
     params: web::Form<AddDeckFormParams>,
 ) -> Result<HttpResponse, Error> {
-    let new_deck = NewDeck {
-        name: String::from(&params.deck_name),
-    };
-    let conn = pool.get().expect("couldn't get db connection from pool");
-    // TODO デッキ名重複防止
-    diesel::insert_into(decks::table)
-        .values(&new_deck)
-        .execute(&conn)
-        .unwrap();
+    let deck_name = String::from(&params.deck_name);
     let mut ctx = tera::Context::new();
-    let decks = decks::table
-        .load::<Deck>(&conn)
-        .expect("Error loading decks");
-    let inserted_ctx = insert_to_ctx(&mut ctx, decks, "デッキを追加しました", "");
-    let view = tmpl
-        .render("deck.html", &inserted_ctx)
-        .map_err(|e| error::ErrorInternalServerError(e))?;
-    Ok(HttpResponse::Ok().content_type("text/html").body(view))
+    let conn = pool.get().expect("couldn't get db connection from pool");
+    let existing_deck = decks::table
+        .filter(decks::name.eq(&deck_name))
+        .first::<Deck>(&conn);
+    if existing_deck.is_err() {
+        let new_deck = NewDeck { name: deck_name };
+        diesel::insert_into(decks::table)
+            .values(&new_deck)
+            .execute(&conn)
+            .unwrap();
+        let decks = decks::table
+            .load::<Deck>(&conn)
+            .expect("Error loading decks");
+        let inserted_ctx = insert_to_ctx(&mut ctx, decks, "デッキを追加しました", "");
+        let view = tmpl
+            .render("deck.html", &inserted_ctx)
+            .map_err(|e| error::ErrorInternalServerError(e))?;
+        return Ok(HttpResponse::Ok().content_type("text/html").body(view));
+    } else {
+        let decks = decks::table
+            .load::<Deck>(&conn)
+            .expect("Error loading decks");
+        let inserted_ctx = insert_to_ctx(&mut ctx, decks, "その名前のデッキは既に存在します", "");
+        let view = tmpl
+            .render("deck.html", &inserted_ctx)
+            .map_err(|e| error::ErrorInternalServerError(e))?;
+        return Ok(HttpResponse::Ok().content_type("text/html").body(view));
+    }
 }
 
 #[derive(Serialize, Deserialize)]
