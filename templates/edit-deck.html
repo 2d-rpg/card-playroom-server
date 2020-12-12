@@ -24,7 +24,7 @@
                         <td>{{ card.id }}</td>
                         <td><a href="{{ card.face }}">{{ card.face }}</td>
                         <td><a href="{{ card.back }}">{{ card.back }}</td>
-                        <td><button class="btn btn-primary card-move-button" id="card-{{ card.id }}"
+                        <td><button class="btn btn-primary card-move-button" id="move-{{ card.id }}"
                                 data-face="{{ card.face }}" data-back="{{ card.back }}">＞</button></td>
                     </tr>
                     {% endfor %}
@@ -60,8 +60,9 @@
                     </thead>
                     <tbody>
                         {% for card_in_deck in cards_in_deck %}
-                        <tr class="card-in-deck" id="tr-{{ card_in_deck_id }}">
-                            <td><button class="btn btn-primary">＜</button></td>
+                        <tr class="card-in-deck" id="tr-{{ card_in_deck.id }}">
+                            <td><button class="btn btn-primary card-remove-button"
+                                    id="remove-{{ card_in_deck.id }}">＜</button></td>
                             <td>{{ card_in_deck.id }}</td>
                             <td><a href="{{ card_in_deck.face }}">{{ card_in_deck.face }}</td>
                             <td><a href="{{ card_in_deck.back }}">{{ card_in_deck.back }}</td>
@@ -80,13 +81,16 @@
 </div>
 <script>
     window.onload = function () {
-        const moveButtons = document.querySelectorAll('.card-move-button');
+        const moveButtons = document.querySelectorAll(".card-move-button");
         moveButtons.forEach(button => {
-            const cardId = button.id.slice("5"); // card-xxx -> xxx
+            const cardId = button.id.slice("5"); // move-xxx -> xxx
             button.addEventListener("click", function () {
                 const numInput = document.getElementById(`num-${cardId}`);
                 if (numInput != null) {
                     numInput.value = Number(numInput.value) + 1;
+                    if (!numInput.classList.contains("text-danger")) {
+                        numInput.classList.add("text-danger");
+                    }
                 } else {
                     const cardsInDeckTr = document.querySelectorAll('.card-in-deck');
                     const idToCardsInDeckTr = Array.from(cardsInDeckTr).map(cardInDeckTr => {
@@ -97,7 +101,8 @@
                     const cardBack = button.dataset.back;
                     const cardInDeck = `
                         <tr class="card-in-deck" id="tr-${cardId}">
-                            <td><button class="btn btn-primary">＜</button></td>
+                            <td><button class="btn btn-primary card-remove-button"
+                                    id="remove-{{ card_in_deck.id }}">＜</button></td>
                             <td>${cardId}</td>
                             <td><a href="${cardFace}">${cardFace}</td>
                             <td><a href="${cardBack}">${cardBack}</td>
@@ -118,6 +123,31 @@
                         cardsTable.insertAdjacentHTML("afterbegin", cardInDeck);
                     } else {
                         beforeBeginElement.insertAdjacentHTML("afterend", cardInDeck);
+                    }
+                    const removeButton = document.getElementById(`remove-${cardId}`);
+                    removeButton.addEventListener("click", function () {
+                        const numInput = document.getElementById(`num-${cardId}`);
+                        if (numInput.value > 0) {
+                            numInput.value = Number(numInput.value) - 1;
+                            if (!numInput.classList.contains("text-danger")) {
+                                numInput.classList.add("text-danger");
+                            }
+                        }
+                    });
+
+                }
+            });
+        });
+
+        const removeButtons = document.querySelectorAll(".card-remove-button");
+        removeButtons.forEach(button => {
+            const cardId = button.id.slice("7"); // remove-xxx -> xxx
+            button.addEventListener("click", function () {
+                const numInput = document.getElementById(`num-${cardId}`);
+                if (numInput.value > 0) {
+                    numInput.value = Number(numInput.value) - 1;
+                    if (!numInput.classList.contains("text-danger")) {
+                        numInput.classList.add("text-danger");
                     }
                 }
             });
