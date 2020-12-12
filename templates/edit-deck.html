@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block title %}デッキ編集{% endblock title %}
 {% block content %}
-<div class="container">
+<div class="container-fluid">
     <h1>デッキ編集</h1>
     <p class="important">
         サーバー内のデッキを編集
     </p>
     <div class="row">
-        <div class="col-sm">
+        <div class="col-sm-6">
             <h2>カード一覧</h2>
             <table class="table">
                 <thead>
@@ -24,13 +24,14 @@
                         <td>{{ card.id }}</td>
                         <td><a href="{{ card.face }}">{{ card.face }}</td>
                         <td><a href="{{ card.back }}">{{ card.back }}</td>
-                        <td><button class="btn btn-primary">＞</button></td>
+                        <td><button class="btn btn-primary card-move-button" id="card-{{ card.id }}"
+                                data-face="{{ card.face }}" data-back="{{ card.back }}">＞</button></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class=" col-sm">
+        <div class="col-sm-6">
             {% if not is_deck_selected %}
             <h2>デッキを選択してください</h2>
             {% for deck in decks %}
@@ -47,7 +48,7 @@
                 <p>
                     {{ edit_deck_confirm }}
                 </p>
-                <table class="table">
+                <table class="table" id="cardsInDeck">
                     <thead>
                         <tr>
                             <th scope="col">削除</th>
@@ -59,12 +60,15 @@
                     </thead>
                     <tbody>
                         {% for card_in_deck in cards_in_deck %}
-                        <tr>
+                        <tr class="card-in-deck" id="tr-{{ card_in_deck_id }}">
                             <td><button class="btn btn-primary">＜</button></td>
                             <td>{{ card_in_deck.id }}</td>
                             <td><a href="{{ card_in_deck.face }}">{{ card_in_deck.face }}</td>
                             <td><a href="{{ card_in_deck.back }}">{{ card_in_deck.back }}</td>
-                            <td>hoge</td>
+                            <td>
+                                <input type="text" id="num-{{ card_in_deck.id }}" value="{{ card_in_deck.num }}"
+                                    readonly>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -74,4 +78,51 @@
         </div>
     </div>
 </div>
+<script>
+    window.onload = function () {
+        const moveButtons = document.querySelectorAll('.card-move-button');
+        moveButtons.forEach(button => {
+            const cardId = button.id.slice("5"); // card-xxx -> xxx
+            button.addEventListener("click", function () {
+                const numInput = document.getElementById(`num-${cardId}`);
+                if (numInput != null) {
+                    numInput.value = Number(numInput.value) + 1;
+                } else {
+                    const cardsInDeckTr = document.querySelectorAll('.card-in-deck');
+                    const idToCardsInDeckTr = Array.from(cardsInDeckTr).map(cardInDeckTr => {
+                        const cardId = cardInDeckTr.id.slice("3"); // tr-xxx -> xxx
+                        return { [cardId]: cardInDeckTr };
+                    });
+                    const cardFace = button.dataset.face;
+                    const cardBack = button.dataset.back;
+                    const cardInDeck = `
+                        <tr class="card-in-deck" id="tr-${cardId}">
+                            <td><button class="btn btn-primary">＜</button></td>
+                            <td>${cardId}</td>
+                            <td><a href="${cardFace}">${cardFace}</td>
+                            <td><a href="${cardBack}">${cardBack}</td>
+                            <td>
+                                <input type="text" class="text-danger" id="num-${cardId}" value="1"
+                                    readonly>
+                            </td>
+                        </tr>
+                    `;
+                    let beforeBeginElement = null;
+                    for (let idToCardInDeckTr of idToCardsInDeckTr) {
+                        const id = Number(Object.keys(idToCardInDeckTr)[0]);
+                        if (id > cardId) break;
+                        beforeBeginElement = idToCardInDeckTr[id];
+                    }
+                    if (beforeBeginElement == null) {
+                        const cardsTable = document.getElementById("cardsInDeck");
+                        cardsTable.insertAdjacentHTML("afterbegin", cardInDeck);
+                    } else {
+                        beforeBeginElement.insertAdjacentHTML("afterend", cardInDeck);
+                    }
+                }
+            });
+        });
+    }
+
+</script>
 {% endblock content %}
