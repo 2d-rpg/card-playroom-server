@@ -3,7 +3,7 @@
  * http://localhost:8080/deck
  */
 use crate::models::{Deck, NewDeck};
-use crate::schema::decks;
+use crate::schema::{belongings, decks};
 use actix_web::{error, web, Error, HttpResponse};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
@@ -76,9 +76,11 @@ async fn delete_deck(
     tmpl: web::Data<tera::Tera>,
     params: web::Form<DeleteDeckFormParams>,
 ) -> Result<HttpResponse, Error> {
-    // TODO belongsテーブルの処理
     // TODO 本当に削除するか確認
     let conn = pool.get().expect("couldn't get db connection from pool");
+    diesel::delete(belongings::table.filter(belongings::deck_id.eq(params.deck_id)))
+        .execute(&conn)
+        .unwrap();
     diesel::delete(decks::table.filter(decks::id.eq(params.deck_id)))
         .execute(&conn)
         .unwrap();

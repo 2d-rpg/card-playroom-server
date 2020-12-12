@@ -3,7 +3,7 @@
  * http://localhost:8080/card
  */
 use crate::models::Card;
-use crate::schema::cards;
+use crate::schema::{belongings, cards};
 use actix_multipart::Multipart;
 use actix_web::{error, web, Error, HttpResponse};
 use diesel::prelude::*;
@@ -42,9 +42,11 @@ async fn delete_cards(
         }
     }
     // TODO 本当に削除するか確認
-    // TODO belongings テーブルの処理
     let conn = pool.get().expect("couldn't get db connection from pool");
     for card_id in card_ids {
+        diesel::delete(belongings::table.filter(belongings::card_id.eq(card_id)))
+            .execute(&conn)
+            .unwrap();
         diesel::delete(cards::table.filter(cards::id.eq(card_id)))
             .execute(&conn)
             .unwrap();
