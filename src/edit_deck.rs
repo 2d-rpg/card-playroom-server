@@ -77,9 +77,11 @@ async fn view_edit_deck_screen(
             Belonging::belonging_to(&selected_deck).select(belongings::card_id);
         let mut cards_in_selected_deck = cards::table
             .filter(cards::id.eq(any(card_ids_in_selected_deck)))
+            .order(cards::id.asc())
             .load::<Card>(&conn)
             .expect("Error loading cards");
         let mut card_nums_in_selected_deck = Belonging::belonging_to(&selected_deck)
+            .order(belongings::card_id.asc())
             .select(belongings::num)
             .load::<i32>(&conn)
             .expect("Error loading belongings");
@@ -204,9 +206,11 @@ async fn complete_deck_editing(
         Belonging::belonging_to(&selected_deck).select(belongings::card_id);
     let mut cards_in_selected_deck = cards::table
         .filter(cards::id.eq(any(card_ids_in_selected_deck)))
+        .order(cards::id.asc())
         .load::<Card>(&conn)
         .expect("Error loading cards");
     let mut card_nums_in_selected_deck = Belonging::belonging_to(&selected_deck)
+        .order(belongings::card_id.asc())
         .select(belongings::num)
         .load::<i32>(&conn)
         .expect("Error loading belongings");

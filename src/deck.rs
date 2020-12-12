@@ -52,6 +52,7 @@ async fn add_deck(
         name: String::from(&params.deck_name),
     };
     let conn = pool.get().expect("couldn't get db connection from pool");
+    // TODO デッキ名重複防止
     diesel::insert_into(decks::table)
         .values(&new_deck)
         .execute(&conn)
