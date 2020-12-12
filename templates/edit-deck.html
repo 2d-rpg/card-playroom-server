@@ -38,13 +38,13 @@
             <a href="/edit-deck/{{ deck.id }}">{{ deck.name }}</a>
             {% endfor %}
             {% else %}
-            <h2>{{ selected_deck_name}}のカード一覧</h2>
+            <h2>{{ selected_deck_name }}のカード一覧</h2>
             {% for deck in decks %}
             <a href="/edit-deck/{{ deck.id }}">{{ deck.name }}</a>
             {% endfor %}
             <form class="form-horizontal" method="POST" action="/edit-deck/complete" enctype="multipart/form-data">
                 <input type="hidden" name="selected_deck_id" value="{{ selected_deck_id }}">
-                <button type="submit" class="btn btn-primary">編集完了</button>
+                <button type="submit" class="btn btn-success">編集完了</button>
                 <p>
                     {{ edit_deck_confirm }}
                 </p>
@@ -60,15 +60,15 @@
                     </thead>
                     <tbody>
                         {% for card_in_deck in cards_in_deck %}
-                        <tr class="card-in-deck" id="tr-{{ card_in_deck.id }}">
+                        <tr class="card-in-deck" id="tr-{{ card_in_deck.card_id }}">
                             <td><button type="button" class="btn btn-primary card-remove-button"
-                                    id="remove-{{ card_in_deck.id }}">＜</button></td>
-                            <td>{{ card_in_deck.id }}</td>
+                                    id="remove-{{ card_in_deck.card_id }}">＜</button></td>
+                            <td>{{ card_in_deck.card_id }}</td>
                             <td><a href="{{ card_in_deck.face }}">{{ card_in_deck.face }}</td>
                             <td><a href="{{ card_in_deck.back }}">{{ card_in_deck.back }}</td>
                             <td>
-                                <input type="text" id="num-{{ card_in_deck.id }}" value="{{ card_in_deck.num }}"
-                                    readonly>
+                                <input type="number" class="card-num-input" name="{{ card_in_deck.card_id }}"
+                                    id="num-{{ card_in_deck.card_id }}" value="{{ card_in_deck.num }}">
                             </td>
                         </tr>
                         {% endfor %}
@@ -108,8 +108,8 @@
                             <td><a href="${cardFace}">${cardFace}</td>
                             <td><a href="${cardBack}">${cardBack}</td>
                             <td>
-                                <input type="text" class="text-danger" id="num-${cardId}" value="1"
-                                    readonly>
+                                <input type="number" class="card-num-input text-danger" 
+                                    name="${cardId}" id="num-${cardId}" value="1">
                             </td>
                         </tr>
                     `;
@@ -130,9 +130,6 @@
                         const numInput = document.getElementById(`num-${cardId}`);
                         if (numInput.value > 0) {
                             numInput.value = Number(numInput.value) - 1;
-                            if (!numInput.classList.contains("text-danger")) {
-                                numInput.classList.add("text-danger");
-                            }
                         }
                     });
 
@@ -148,13 +145,19 @@
                 const numInput = document.getElementById(`num-${cardId}`);
                 if (numInput.value > 0) {
                     numInput.value = Number(numInput.value) - 1;
-                    if (!numInput.classList.contains("text-danger")) {
-                        numInput.classList.add("text-danger");
-                    }
+                }
+            });
+        });
+
+        // カードの数が編集されたらそのテキストを赤くする
+        const cardNumInputs = document.querySelectorAll(".card-num-input");
+        cardNumInputs.forEach(cardNumInput => {
+            cardNumInput.addEventListener("input", function () {
+                if (!cardNumInput.classList.contains("text-danger")) {
+                    cardNumInput.classList.add("text-danger");
                 }
             });
         });
     }
-
 </script>
 {% endblock content %}
