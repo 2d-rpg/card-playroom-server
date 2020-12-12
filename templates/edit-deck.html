@@ -61,7 +61,7 @@
                     <tbody>
                         {% for card_in_deck in cards_in_deck %}
                         <tr class="card-in-deck" id="tr-{{ card_in_deck.id }}">
-                            <td><button class="btn btn-primary card-remove-button"
+                            <td><button type="button" class="btn btn-primary card-remove-button"
                                     id="remove-{{ card_in_deck.id }}">＜</button></td>
                             <td>{{ card_in_deck.id }}</td>
                             <td><a href="{{ card_in_deck.face }}">{{ card_in_deck.face }}</td>
@@ -81,6 +81,7 @@
 </div>
 <script>
     window.onload = function () {
+        // デッキにカードを追加
         const moveButtons = document.querySelectorAll(".card-move-button");
         moveButtons.forEach(button => {
             const cardId = button.id.slice("5"); // move-xxx -> xxx
@@ -101,8 +102,8 @@
                     const cardBack = button.dataset.back;
                     const cardInDeck = `
                         <tr class="card-in-deck" id="tr-${cardId}">
-                            <td><button class="btn btn-primary card-remove-button"
-                                    id="remove-{{ card_in_deck.id }}">＜</button></td>
+                            <td><button type="button" class="btn btn-primary card-remove-button"
+                                    id="remove-${cardId}">＜</button></td>
                             <td>${cardId}</td>
                             <td><a href="${cardFace}">${cardFace}</td>
                             <td><a href="${cardBack}">${cardBack}</td>
@@ -139,6 +140,7 @@
             });
         });
 
+        // デッキからカードを削除
         const removeButtons = document.querySelectorAll(".card-remove-button");
         removeButtons.forEach(button => {
             const cardId = button.id.slice("7"); // remove-xxx -> xxx
