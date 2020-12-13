@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}カードアップロード{% endblock title %}
+{% block content %}
+<div class="container">
+    <h1>カード アップロード</h1>
+    <p class="important">
+        カードのサーバーへのアップロード
+    </p>
+    <h2>カードの追加</h2>
+    <p>
+        {{ face_upload_confirm }}
+    </p>
+    <form class="form-horizontal" method="POST" action="/upload/face" enctype="multipart/form-data">
+        <div class="form-group">
+            <input type="file" class="form-control-file" name="img[]" multiple="multiple" accept="image/*" required>
+            <label for="backImage" class="control-label">裏面画像:</label>
+            <select id="backImage" name="back_image" class="form-control" required>
+                <!-- TODO 裏面画像のサムネイル表示 -->
+                {% for file_name in back_file_names %}
+                <option value="{{ file_name }}">{{ file_name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">アップロード</button>
+        </div>
+    </form>
+
+    <h2>裏面画像の追加</h2>
+    <p>
+        {{ back_upload_confirm }}
+    </p>
+    <form class="form-horizontal" method="POST" action="/upload/back" enctype="multipart/form-data">
+        <input type="file" class="form-control-file" name="img[]" multiple="multiple" accept="image/*" required>
+        <br>
+        <button type="submit" class="btn btn-primary">アップロード</button>
+    </form>
+</div>
+{% endblock content %}

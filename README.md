@@ -22,6 +22,11 @@ code card-playroom-server
 cat .env.example > .env # cp .env.example .env も可
 ```
 
+diesel_cli のインストール
+```bash
+cargo install diesel_cli --no-default-features --features postgres
+```
+
 `diesel`のセットアップを行う．
 
 ```bash
@@ -37,6 +42,24 @@ CREATE TABLE rooms (
   name VARCHAR NOT NULL,
   players TEXT[] NOT NULL
 );
+
+CREATE TABLE cards (
+  id      SERIAL PRIMARY KEY,
+  face    VARCHAR NOT NULL,
+  back    VARCHAR NOT NULL
+);
+
+CREATE TABLE decks (
+  id      SERIAL PRIMARY KEY,
+  name    VARCHAR NOT NULL
+);
+
+CREATE TABLE belongings (
+  id      SERIAL PRIMARY KEY,
+  deck_id INTEGER NOT NULL references decks(id),
+  card_id INTEGER NOT NULL references cards(id),
+  num     INTEGER NOT NULL
+);
 ```
 
 データベース起動
@@ -51,6 +74,9 @@ diesel migration run
 cargo run # local-container間の同期が早い場合
 cargo run --target-dir /tmp/target # local-container間の同期が遅い場合
 ```
+
+http://0.0.0.0:8080 にサーバーが建てられる．
+http://127.0.0.1:8080 にアクセス．
 
 データ追加
 
@@ -91,8 +117,6 @@ query {
   rooms{id, name, players}
 }
 ```
-
-http://0.0.0.0:8080 にサーバーが建てられる．
 
 ## データベースの変更と確認方法
 

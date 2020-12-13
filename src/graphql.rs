@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use actix_web::{web, Error, HttpResponse};
 
-use juniper::http::playground::playground_source;
 use juniper::{http::GraphQLRequest, Executor, FieldResult};
 // use juniper_eager_loading::{prelude::*, EagerLoading, HasMany};
 use juniper_from_schema::graphql_schema_from_file;
@@ -132,13 +131,6 @@ impl From<crate::models::Room> for Room {
     }
 }
 
-fn playground() -> HttpResponse {
-    let html = playground_source("");
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(html)
-}
-
 async fn graphql(
     schema: web::Data<Arc<Schema>>,
     data: web::Json<GraphQLRequest>,
@@ -164,6 +156,5 @@ pub fn register(config: &mut web::ServiceConfig) {
 
     config
         .data(schema)
-        .route("/", web::post().to(graphql))
-        .route("/", web::get().to(playground));
+        .route("/graphql", web::post().to(graphql));
 }

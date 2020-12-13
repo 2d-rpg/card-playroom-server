@@ -8,7 +8,7 @@ use std::env;
 // use actix::prelude::*;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
-use actix_web::{App, HttpServer};
+use actix_web::{http::header, App, HttpServer};
 // use actix_web_actors::ws;
 
 use diesel::{
@@ -16,10 +16,16 @@ use diesel::{
     r2d2::{self, ConnectionManager},
 };
 
+pub mod card;
+pub mod deck;
+pub mod edit_deck;
 pub mod graphql;
+pub mod index;
 pub mod models;
 pub mod schema;
-pub mod websocket;
+pub mod upload;
+pub mod ws_actors;
+pub mod ws_session;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type DbCon = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
@@ -39,12 +45,21 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(
                 Cors::default()
+                    .allowed_origin("http://localhost:8080") // TODO デプロイ時のドメインに対応
+                    .allowed_origin("http://127.0.0.1:8080")
                     .allowed_methods(vec!["POST", "GET"])
+                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+                    .allowed_header(header::CONTENT_TYPE)
                     .supports_credentials()
                     .max_age(3600),
             )
             .configure(graphql::register)
-            .configure(websocket::register)
+            .configure(ws_session::register)
+            .configure(index::register)
+            .configure(card::register)
+            .configure(edit_deck::register)
+            .configure(deck::register)
+            .configure(upload::register)
     })
     .bind("0.0.0.0:8080")?
     .run()
