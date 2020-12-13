@@ -290,6 +290,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-web-actors"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f6edf3c2693e2a8c422800c87ee89a6a4eac7dd01109bc172a1093ce1f4f001"
+dependencies = [
+ "actix",
+ "actix-codec",
+ "actix-http",
+ "actix-web",
+ "bytes",
+ "futures-channel",
+ "futures-core",
+ "pin-project",
+]
+
+[[package]]
 name = "actix-web-codegen"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -506,6 +522,7 @@ dependencies = [
  "actix",
  "actix-cors",
  "actix-web",
+ "actix-web-actors",
  "diesel",
  "dotenv",
  "env_logger",

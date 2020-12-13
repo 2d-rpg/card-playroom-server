@@ -19,6 +19,7 @@ use diesel::{
 pub mod graphql;
 pub mod models;
 pub mod schema;
+pub mod websocket;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type DbCon = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
@@ -42,8 +43,8 @@ async fn main() -> std::io::Result<()> {
                     .supports_credentials()
                     .max_age(3600),
             )
-            // .service(web::resource("/ws/").route(web::get().to(ws_index)))
             .configure(graphql::register)
+            .configure(websocket::register)
     })
     .bind("0.0.0.0:8080")?
     .run()
