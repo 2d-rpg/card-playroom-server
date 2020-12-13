@@ -1,4 +1,3 @@
-use std::convert::From;
 use std::sync::Arc;
 
 use actix_web::{web, Error, HttpResponse};
@@ -13,8 +12,8 @@ use itertools::Itertools;
 
 use crate::{DbCon, DbPool};
 
-use crate::models::Card;
-use crate::schema::cards;
+use crate::models::{Card, Room};
+use crate::schema::{cards, rooms};
 graphql_schema_from_file!("src/schema.graphql");
 
 pub struct Context {
@@ -31,8 +30,6 @@ impl QueryFields for Query {
         executor: &Executor<'_, Context>,
         _trail: &QueryTrail<'_, Room, Walked>,
     ) -> FieldResult<Vec<Room>> {
-        use crate::schema::rooms;
-
         rooms::table
             .load::<crate::models::Room>(&executor.context().db_con)
             .and_then(|rooms| Ok(rooms.into_iter().map_into().collect()))
@@ -58,8 +55,6 @@ impl MutationFields for Mutation {
         name: String,
         player: String,
     ) -> FieldResult<Room> {
-        use crate::schema::rooms;
-
         let new_room = crate::models::NewRoom {
             name: name,
             players: vec![player],
@@ -79,8 +74,6 @@ impl MutationFields for Mutation {
         player: String,
         room_id: i32,
     ) -> FieldResult<Room> {
-        use crate::schema::rooms;
-
         let target = rooms::table.find(room_id);
         let mut players: Vec<String> = target
             .first::<crate::models::Room>(&executor.context().db_con)
@@ -102,8 +95,6 @@ impl MutationFields for Mutation {
         _trail: &QueryTrail<'_, Room, Walked>,
         room_id: i32,
     ) -> FieldResult<Room> {
-        use crate::schema::rooms;
-
         let target = rooms::table.find(room_id);
 
         diesel::delete(target)
@@ -111,12 +102,6 @@ impl MutationFields for Mutation {
             .map(Into::into)
             .map_err(Into::into)
     }
-}
-
-pub struct Room {
-    id: i32,
-    name: String,
-    players: Vec<String>,
 }
 
 impl RoomFields for Room {
@@ -130,16 +115,6 @@ impl RoomFields for Room {
 
     fn field_players(&self, _: &Executor<'_, Context>) -> FieldResult<&Vec<String>> {
         Ok(&self.players)
-    }
-}
-
-impl From<crate::models::Room> for Room {
-    fn from(room: crate::models::Room) -> Self {
-        Self {
-            id: room.id,
-            name: room.name,
-            players: room.players,
-        }
     }
 }
 
