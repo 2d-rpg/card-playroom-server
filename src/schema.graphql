@@ -6,6 +6,7 @@ schema {
 type Query {
   rooms: [Room!]! @juniper(ownership: "owned")
   cards: [Card!]! @juniper(ownership: "owned")
+  decksWithCards: [DeckWithCards!]! @juniper(ownership: "owned")
 }
 
 type Mutation {
@@ -34,4 +35,10 @@ type Card {
   id: ID! @juniper(ownership: "owned")
   face: String!
   back: String!
+}
+
+type DeckWithCards {
+  id: ID! @juniper(ownership: "owned")
+  name: String!
+  cardIds: [Int!]!
 }
