@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}デッキ編集{% endblock title %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-6">
+            <h1>デッキ編集</h1>
+            <p class="important">
+                サーバー内のデッキを編集
+            </p>
+            <h2>カード一覧</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">表画像</th>
+                        <th scope="col">裏画像</th>
+                        <th scope="col">デッキへ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--TODO リンクにホバーすると画像を表示するようにする -->
+                    {% for card in cards %}
+                    <tr>
+                        <td>{{ card.id }}</td>
+                        <td><a href="{{ card.face }}">{{ card.face }}</td>
+                        <td><a href="{{ card.back }}">{{ card.back }}</td>
+                        <td><button class="btn btn-primary card-move-button" id="move-{{ card.id }}"
+                                data-face="{{ card.face }}" data-back="{{ card.back }}">＞</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-sm-6">
+            {% if not is_deck_selected %}
+            <h2>デッキを作成してください</h2>
+            <a href="/deck">デッキ作成</a>
+            {% else %}
+            <h2>{{ selected_deck_name }}のカード一覧</h2>
+            <div class="form-group w-25 m-0">
+                <select id="deckSelect" class="form-control" name="deck_id">
+                    {% for deck in decks %}
+                    {% if deck.id == selected_deck_id %}
+                    <option value="{{ deck.id }}" selected>{{ deck.name }}</option>
+                    {% else %}
+                    <option value="{{ deck.id }}">{{ deck.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <form class="form-horizontal" method="POST" action="/edit-deck/complete" enctype="multipart/form-data">
+                <input type="hidden" name="selected_deck_id" value="{{ selected_deck_id }}">
+                <button type="submit" class="btn btn-success">編集完了</button>
+                <p>
+                    {{ edit_deck_confirm }}
+                </p>
+                <table class="table" id="cardsInDeck" style="margin-top: 1.25rem!important;">
+                    <thead>
+                        <tr>
+                            <th scope="col">削除</th>
+                            <th scope="col">ID</th>
+                            <th scope="col">表画像</th>
+                            <th scope="col">裏画像</th>
+                            <th scope="col">枚数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for card_in_deck in cards_in_deck %}
+                        <tr class="card-in-deck" id="tr-{{ card_in_deck.card_id }}">
+                            <td><button type="button" class="btn btn-primary card-remove-button"
+                                    id="remove-{{ card_in_deck.card_id }}">＜</button></td>
+                            <td>{{ card_in_deck.card_id }}</td>
+                            <td><a href="{{ card_in_deck.face }}">{{ card_in_deck.face }}</td>
+                            <td><a href="{{ card_in_deck.back }}">{{ card_in_deck.back }}</td>
+                            <td>
+                                <input type="number" class="card-num-input" name="{{ card_in_deck.card_id }}"
+                                    id="num-{{ card_in_deck.card_id }}" value="{{ card_in_deck.num }}">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+    window.onload = function () {
+        // 編集するデッキの変更
+        const deckSelect = document.getElementById("deckSelect");
+        deckSelect.addEventListener("change", function (event) {
+            const deckId = event.target.value;
+            window.location.href = `/edit-deck/${deckId}`;
+        });
+
+        // デッキにカードを追加
+        const moveButtons = document.querySelectorAll(".card-move-button");
+        moveButtons.forEach(button => {
+            const cardId = button.id.slice("5"); // move-xxx -> xxx
+            button.addEventListener("click", function () {
+                const numInput = document.getElementById(`num-${cardId}`);
+                if (numInput != null) {
+                    numInput.value = Number(numInput.value) + 1;
+                    if (!numInput.classList.contains("text-danger")) {
+                        numInput.classList.add("text-danger");
+                    }
+                } else {
+                    const cardsInDeckTr = document.querySelectorAll('.card-in-deck');
+                    const idToCardsInDeckTr = Array.from(cardsInDeckTr).map(cardInDeckTr => {
+                        const cardId = cardInDeckTr.id.slice("3"); // tr-xxx -> xxx
+                        return { [cardId]: cardInDeckTr };
+                    });
+                    const cardFace = button.dataset.face;
+                    const cardBack = button.dataset.back;
+                    const cardInDeck = `
+                        <tr class="card-in-deck" id="tr-${cardId}">
+                            <td><button type="button" class="btn btn-primary card-remove-button"
+                                    id="remove-${cardId}">＜</button></td>
+                            <td>${cardId}</td>
+                            <td><a href="${cardFace}">${cardFace}</td>
+                            <td><a href="${cardBack}">${cardBack}</td>
+                            <td>
+                                <input type="number" class="card-num-input text-danger" 
+                                    name="${cardId}" id="num-${cardId}" value="1">
+                            </td>
+                        </tr>
+                    `;
+                    let beforeBeginElement = null;
+                    for (let idToCardInDeckTr of idToCardsInDeckTr) {
+                        const id = Number(Object.keys(idToCardInDeckTr)[0]);
+                        if (id > cardId) break;
+                        beforeBeginElement = idToCardInDeckTr[id];
+                    }
+                    if (beforeBeginElement == null) {
+                        const cardsTable = document.getElementById("cardsInDeck");
+                        cardsTable.insertAdjacentHTML("afterbegin", cardInDeck);
+                    } else {
+                        beforeBeginElement.insertAdjacentHTML("afterend", cardInDeck);
+                    }
+                    const removeButton = document.getElementById(`remove-${cardId}`);
+                    removeButton.addEventListener("click", function () {
+                        const numInput = document.getElementById(`num-${cardId}`);
+                        if (numInput.value > 0) {
+                            numInput.value = Number(numInput.value) - 1;
+                        }
+                    });
+
+                }
+            });
+        });
+
+        // デッキからカードを削除
+        const removeButtons = document.querySelectorAll(".card-remove-button");
+        removeButtons.forEach(button => {
+            const cardId = button.id.slice("7"); // remove-xxx -> xxx
+            button.addEventListener("click", function () {
+                const numInput = document.getElementById(`num-${cardId}`);
+                if (numInput.value > 0) {
+                    numInput.value = Number(numInput.value) - 1;
+                }
+            });
+        });
+
+        // カードの数が編集されたらそのテキストを赤くする
+        const cardNumInputs = document.querySelectorAll(".card-num-input");
+        cardNumInputs.forEach(cardNumInput => {
+            cardNumInput.addEventListener("input", function () {
+                if (!cardNumInput.classList.contains("text-danger")) {
+                    cardNumInput.classList.add("text-danger");
+                }
+            });
+        });
+    }
+</script>
+{% endblock content %}

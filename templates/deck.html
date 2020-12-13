@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}デッキ作成・削除{% endblock title %}
+{% block content %}
+<div class="container">
+    <h1>デッキ作成・削除</h1>
+    <h2>デッキ作成</h2>
+    <p>
+        {{ add_deck_confirm }}
+    </p>
+    <form class="form-horizontal" method="POST" action="/deck/add">
+        <div class="form-group">
+            <div class="form-group">
+                <label for="deckName">デッキ名</label>
+                <input type="text" id="deckName" name="deck_name" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">追加</button>
+        </div>
+    </form>
+
+    <h2>デッキ削除</h2>
+    <p>
+        {{ delete_deck_confirm }}
+    </p>
+    <form class="form-horizontal" method="POST" action="/deck/delete">
+        <div class="form-group">
+            <div class="form-group w-25 m-0">
+                <select class="form-control" name="deck_id" required>
+                    {% for deck in decks %}
+                    <option value="{{ deck.id }}">{{ deck.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" id="deleteDeckButton" class="btn btn-primary">削除</button>
+        </div>
+    </form>
+</div>
+<script>
+    window.onload = function () {
+        const deleteButton = document.getElementById("deleteDeckButton");
+        deleteButton.addEventListener("click", function (event) {
+            const isConfirmed = confirm("本当に削除しますか？");
+            if (!isConfirmed) {
+                event.preventDefault();
+            }
+        });
+    };
+</script>
+{% endblock content %}
