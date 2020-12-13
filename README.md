@@ -45,7 +45,6 @@ CREATE TABLE rooms (
 
 CREATE TABLE cards (
   id      SERIAL PRIMARY KEY,
-  card_id SERIAL NOT NULL,
   face    VARCHAR NOT NULL,
   back    VARCHAR NOT NULL
 );
@@ -53,6 +52,13 @@ CREATE TABLE cards (
 CREATE TABLE decks (
   id      SERIAL PRIMARY KEY,
   name    VARCHAR NOT NULL
+);
+
+CREATE TABLE belongings (
+  id      SERIAL PRIMARY KEY,
+  deck_id INTEGER NOT NULL references decks(id),
+  card_id INTEGER NOT NULL references cards(id),
+  num     INTEGER NOT NULL
 );
 ```
 
