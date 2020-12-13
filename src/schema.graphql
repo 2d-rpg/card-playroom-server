@@ -5,6 +5,7 @@ schema {
 
 type Query {
   rooms: [Room!]! @juniper(ownership: "owned")
+  cards: [Card!]! @juniper(ownership: "owned")
 }
 
 type Mutation {
@@ -27,4 +28,10 @@ type Room {
   id: ID! @juniper(ownership: "owned")
   name: String!
   players: [String!]!
+}
+
+type Card {
+  id: ID! @juniper(ownership: "owned")
+  face: String!
+  back: String!
 }

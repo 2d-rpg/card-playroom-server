@@ -13,6 +13,8 @@ use itertools::Itertools;
 
 use crate::{DbCon, DbPool};
 
+use crate::models::Card;
+use crate::schema::cards;
 graphql_schema_from_file!("src/schema.graphql");
 
 pub struct Context {
@@ -33,6 +35,16 @@ impl QueryFields for Query {
 
         rooms::table
             .load::<crate::models::Room>(&executor.context().db_con)
+            .and_then(|rooms| Ok(rooms.into_iter().map_into().collect()))
+            .map_err(Into::into)
+    }
+    fn field_cards(
+        &self,
+        executor: &Executor<'_, Context>,
+        _trail: &QueryTrail<'_, Card, Walked>,
+    ) -> FieldResult<Vec<Card>> {
+        cards::table
+            .load::<Card>(&executor.context().db_con)
             .and_then(|rooms| Ok(rooms.into_iter().map_into().collect()))
             .map_err(Into::into)
     }
@@ -131,6 +143,20 @@ impl From<crate::models::Room> for Room {
     }
 }
 
+impl CardFields for Card {
+    fn field_id(&self, _: &Executor<'_, Context>) -> FieldResult<juniper::ID> {
+        Ok(juniper::ID::new(self.id.to_string()))
+    }
+
+    fn field_face(&self, _: &Executor<'_, Context>) -> FieldResult<&String> {
+        Ok(&self.face)
+    }
+
+    fn field_back(&self, _: &Executor<'_, Context>) -> FieldResult<&String> {
+        Ok(&self.back)
+    }
+}
+
 async fn graphql(
     schema: web::Data<Arc<Schema>>,
     data: web::Json<GraphQLRequest>,
@@ -140,7 +166,7 @@ async fn graphql(
         db_con: db_pool.get().unwrap(),
     };
 
-    let room = web::block(move || {
+    let json_result = web::block(move || {
         let res = data.execute(&schema, &ctx);
         Ok::<_, serde_json::error::Error>(serde_json::to_string(&res)?)
     })
@@ -148,7 +174,7 @@ async fn graphql(
 
     Ok(HttpResponse::Ok()
         .content_type("application/json")
-        .body(room))
+        .body(json_result))
 }
 
 pub fn register(config: &mut web::ServiceConfig) {
