@@ -30,9 +30,11 @@ fn insert_to_ctx(
     edit_deck_confirm: &str,
 ) -> tera::Context {
     let cards = cards::table
+        .order_by(cards::id.asc())
         .load::<Card>(&conn)
         .expect("Error loading cards");
     let decks = decks::table
+        .order_by(decks::id.asc())
         .load::<Deck>(&conn)
         .expect("Error loading decks");
     ctx.insert("cards", &cards);
@@ -53,6 +55,7 @@ fn insert_to_ctx(
             Belonging::belonging_to(&selected_deck).select(belongings::card_id);
         let cards_in_selected_deck = cards::table
             .filter(cards::id.eq(any(card_ids_in_selected_deck)))
+            .order_by(cards::id.asc())
             .load::<Card>(&conn)
             .expect("Error loading cards");
         let cards_id_and_num_in_selected_deck = &mut Belonging::belonging_to(&selected_deck)

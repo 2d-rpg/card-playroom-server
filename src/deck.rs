@@ -18,6 +18,7 @@ fn insert_to_ctx(
     delete_deck_confirm: &str,
 ) -> tera::Context {
     let decks = decks::table
+        .order_by(decks::id.asc())
         .load::<Deck>(&conn)
         .expect("Error loading decks");
     ctx.insert("decks", &decks);
