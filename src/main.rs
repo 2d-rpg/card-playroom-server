@@ -57,7 +57,6 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(
                 Cors::default()
-                    .allowed_origin("127.0.0.1:12345")
                     .allow_any_origin() // TODO: デプロイ時にサーバのドメインを書けばいいのか調べる
                     .allowed_methods(vec!["POST", "GET"])
                     .allowed_headers(vec![
