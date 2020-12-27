@@ -603,11 +603,14 @@ name = "card-playroom-server"
 version = "0.1.0"
 dependencies = [
  "actix",
+ "actix-codec",
  "actix-cors",
  "actix-files",
  "actix-multipart",
  "actix-web",
  "actix-web-actors",
+ "byteorder",
+ "bytes",
  "diesel",
  "dotenv",
  "env_logger",
@@ -622,6 +625,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tera",
+ "tokio",
+ "tokio-util",
 ]
 
 [[package]]

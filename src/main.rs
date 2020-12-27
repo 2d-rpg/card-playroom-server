@@ -17,6 +17,7 @@ use diesel::{
 };
 
 pub mod card;
+pub mod codec;
 pub mod deck;
 pub mod edit_deck;
 pub mod graphql;
