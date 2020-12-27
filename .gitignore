@@ -11,3 +11,12 @@
 # Cargo.lock
 
 # End of https://www.toptal.com/developers/gitignore/api/rust
+
+.env
+
+migrations/
+
+assets/back/*
+!assets/back/.gitkeep
+assets/face/*
+assets/face/.gitkeep

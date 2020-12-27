@@ -16,8 +16,118 @@ code card-playroom-server
 
 以下 Docker コンテナ上で実行
 
-```
-cargo run
+`.env.example`ファイルを`.env`にコピーする
+
+```bash
+cat .env.example > .env # cp .env.example .env も可
 ```
 
-http://127.0.0.1:8080 にサーバーが建てられる．
+diesel_cli のインストール
+```bash
+cargo install diesel_cli --no-default-features --features postgres
+```
+
+`diesel`のセットアップを行う．
+
+```bash
+diesel setup
+diesel migration generate create_rooms
+```
+
+`up.sql`に以下を追記．
+
+```sql
+CREATE TABLE rooms (
+  id   SERIAL  PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  players TEXT[] NOT NULL
+);
+
+CREATE TABLE cards (
+  id      SERIAL PRIMARY KEY,
+  face    VARCHAR NOT NULL,
+  back    VARCHAR NOT NULL
+);
+
+CREATE TABLE decks (
+  id      SERIAL PRIMARY KEY,
+  name    VARCHAR NOT NULL
+);
+
+CREATE TABLE belongings (
+  id      SERIAL PRIMARY KEY,
+  deck_id INTEGER NOT NULL references decks(id),
+  card_id INTEGER NOT NULL references cards(id),
+  num     INTEGER NOT NULL
+);
+```
+
+データベース起動
+
+```bash
+diesel migration run
+```
+
+サーバー起動
+
+```bash
+cargo run # local-container間の同期が早い場合
+cargo run --target-dir /tmp/target # local-container間の同期が遅い場合
+```
+
+http://0.0.0.0:8080 にサーバーが建てられる．
+http://127.0.0.1:8080 にアクセス．
+
+データ追加
+
+- createRoom(ルーム作成)
+
+```graphql
+mutation {
+  createRoom(name: "hoge", player: "fuga") {
+    id, name, players
+  }
+}
+```
+
+- enterRoom(ルーム参加)
+
+```graphql
+mutation {
+  enterRoom(player: "piyo", roomId: 1) {
+    id, name, players
+  }
+}
+```
+
+- removeRoom(ルーム削除)
+
+```graphql
+mutation {
+  removeRoom(roomId: 2) {
+    id, name, players
+  }
+}
+```
+
+データ取得
+
+```graphql
+query {
+  rooms{id, name, players}
+}
+```
+
+## データベースの変更と確認方法
+
+`up.sql`を変更した場合，以下のコマンドでデータベースの更新を行う．
+
+```bash
+diesel database reset
+```
+
+上記の変更後，`schema.rs`の変更が自動で行われ，以下のコマンドでデータベースのスキーマを確認できる．
+
+```bash
+diesel print-schema
+```

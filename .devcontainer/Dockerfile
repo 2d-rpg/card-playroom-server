@@ -5,6 +5,12 @@ RUN apt update \
     apt-utils \
     git \
     ca-certificates \
+    libpq-dev \
+    postgresql \
     && apt autoremove -y \
     && apt clean -y \
     && rm -rf /var/lib/apt/lists/* \
+    && rustup component add rust-analysis --toolchain 1.47.0-x86_64-unknown-linux-gnu \
+    && rustup component add rust-src --toolchain 1.47.0-x86_64-unknown-linux-gnu \
+    && rustup component add rls --toolchain 1.47.0-x86_64-unknown-linux-gnu \
+    && cargo install diesel_cli --no-default-features --features postgres \
