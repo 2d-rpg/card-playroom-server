@@ -1,17 +1,21 @@
 ---
 name: 機能改善
 about: 既存機能の改善提案
-title: ''
-labels: ''
-assignees: ''
+title: ""
+labels: "enhancement"
+assignees: ""
 
 ---
 
 # 概要
-例: デッキ編集のカード追加，削除にアニメーションを追加
+
+例: デッキ編集時リンクにマウスカーソルをホバーすると画像を表示
 
 # 関連するコード
-例: [card\-playroom\-client/index\.tsx at 4a6bcda79866186e6a9ddb5feb70501238718dd8 · 2d\-rpg/card\-playroom\-client](https://github.com/2d-rpg/card-playroom-client/blob/4a6bcda79866186e6a9ddb5feb70501238718dd8/src/screens/edit-deck/index.tsx)
+
+できれば再現性のために特定のコミットのコードへのリンクを貼る  
+例: [card\-playroom\-server/edit\-deck\.html at bd31a19a3668e906ae0c045f96f59acef3181527 · 2d\-rpg/card\-playroom\-server](https://github.com/2d-rpg/card-playroom-server/blob/bd31a19a3668e906ae0c045f96f59acef3181527/templates/edit-deck.html)
 
 # 参考リンク
-例: [Animations · React Native](https://reactnative.dev/docs/animations)
+
+例: [Element: mouseover イベント \- Web API \| MDN](https://developer.mozilla.org/ja/docs/Web/API/Element)
