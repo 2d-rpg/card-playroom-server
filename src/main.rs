@@ -39,10 +39,20 @@ async fn main() -> std::io::Result<()> {
 
     let db_pool = create_db_pool();
 
+    // Start game server actor
+    let ws_server = ws_actors::ChatServer::default().start();
+
+    // Start tcp server in separate thread
+    let srv = ws_server.clone();
+    ws_session::tcp_server("127.0.0.1:12345", srv);
+
+    println!("Started http server: 127.0.0.1:8080");
+
     // Start http server
     HttpServer::new(move || {
         App::new()
             .data(db_pool.clone())
+            .data(ws_server.clone())
             .wrap(Logger::default())
             .wrap(
                 Cors::default()

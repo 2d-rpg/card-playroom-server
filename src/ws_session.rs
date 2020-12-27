@@ -413,16 +413,16 @@ async fn ws_route(
 }
 
 pub fn register(config: &mut web::ServiceConfig) {
-    // Start game server actor
-    let ws_server = ws_actors::ChatServer::default().start();
+    // // Start game server actor
+    // let ws_server = ws_actors::ChatServer::default().start();
 
-    // Start tcp server in separate thread
-    let srv = ws_server.clone();
-    tcp_server("127.0.0.1:12345", srv);
+    // // Start tcp server in separate thread
+    // let srv = ws_server.clone();
+    // tcp_server("127.0.0.1:12345", srv);
 
-    println!("Started http server: 127.0.0.1:8080");
+    // println!("Started http server: 127.0.0.1:8080");
 
     config
-        .data(ws_server.clone())
+        // .data(ws_server.clone())
         .service(web::resource("/ws").to(ws_route));
 }
