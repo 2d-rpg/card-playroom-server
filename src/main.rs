@@ -46,10 +46,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(
                 Cors::default()
-                    .allowed_origin("http://localhost:8080") // TODO デプロイ時のドメインに対応
-                    .allowed_origin("http://127.0.0.1:8080")
-                    .allowed_origin("https://www.websocket.org")
-                    .allowed_origin("https://app.gosandy.io")
+                    .allowed_origin("127.0.0.1:12345")
                     .allow_any_origin() // TODO: デプロイ時にサーバのドメインを書けばいいのか調べる
                     .allowed_methods(vec!["POST", "GET"])
                     .allowed_headers(vec![

@@ -10,9 +10,8 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_util::codec::FramedRead;
 
 use actix::prelude::*;
-use actix::*;
 // use actix_files as fs;
-use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 
 use crate::codec::{ChatCodec, ChatRequest, ChatResponse};
