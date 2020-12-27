@@ -41,6 +41,7 @@ impl QueryFields for Query {
             .and_then(|rooms| Ok(rooms.into_iter().map_into().collect()))
             .map_err(Into::into)
     }
+
     fn field_cards(
         &self,
         executor: &Executor<'_, Context>,
@@ -51,6 +52,7 @@ impl QueryFields for Query {
             .and_then(|cards| Ok(cards.into_iter().map_into().collect()))
             .map_err(Into::into)
     }
+
     fn field_decks_with_cards(
         &self,
         executor: &Executor<'_, Context>,
