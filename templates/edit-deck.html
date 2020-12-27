@@ -75,7 +75,7 @@
                             <td><a href="{{ card_in_deck.back }}">{{ card_in_deck.back }}</td>
                             <td>
                                 <input type="number" class="card-num-input" name="{{ card_in_deck.card_id }}"
-                                    id="num-{{ card_in_deck.card_id }}" value="{{ card_in_deck.num }}">
+                                    id="num-{{ card_in_deck.card_id }}" value="{{ card_in_deck.num }}" required>
                             </td>
                         </tr>
                         {% endfor %}
@@ -123,7 +123,7 @@
                             <td><a href="${cardBack}">${cardBack}</td>
                             <td>
                                 <input type="number" class="card-num-input text-danger" 
-                                    name="${cardId}" id="num-${cardId}" value="1">
+                                    name="${cardId}" id="num-${cardId}" value="1" required>
                             </td>
                         </tr>
                     `;
@@ -159,6 +159,9 @@
                 const numInput = document.getElementById(`num-${cardId}`);
                 if (numInput.value > 0) {
                     numInput.value = Number(numInput.value) - 1;
+                    if (!numInput.classList.contains("text-danger")) {
+                        numInput.classList.add("text-danger");
+                    }
                 }
             });
         });
