@@ -328,6 +328,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-web-actors"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f6edf3c2693e2a8c422800c87ee89a6a4eac7dd01109bc172a1093ce1f4f001"
+dependencies = [
+ "actix",
+ "actix-codec",
+ "actix-http",
+ "actix-web",
+ "bytes",
+ "futures-channel",
+ "futures-core",
+ "pin-project",
+]
+
+[[package]]
 name = "actix-web-codegen"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -587,10 +603,14 @@ name = "card-playroom-server"
 version = "0.1.0"
 dependencies = [
  "actix",
+ "actix-codec",
  "actix-cors",
  "actix-files",
  "actix-multipart",
  "actix-web",
+ "actix-web-actors",
+ "byteorder",
+ "bytes",
  "diesel",
  "dotenv",
  "env_logger",
@@ -605,6 +625,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tera",
+ "tokio",
+ "tokio-util",
 ]
 
 [[package]]
