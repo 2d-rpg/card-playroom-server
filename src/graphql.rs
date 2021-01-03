@@ -12,8 +12,8 @@ use itertools::Itertools;
 
 use crate::{DbCon, DbPool};
 
-use crate::models::{Belonging, Card, Deck, Room};
-use crate::schema::{belongings, cards, decks, rooms};
+use crate::models::{Belonging, Card, Deck};
+use crate::schema::{belongings, cards, decks};
 graphql_schema_from_file!("src/schema.graphql");
 
 pub struct Context {
@@ -31,17 +31,6 @@ pub struct DeckWithCards {
 }
 
 impl QueryFields for Query {
-    fn field_rooms(
-        &self,
-        executor: &Executor<'_, Context>,
-        _trail: &QueryTrail<'_, Room, Walked>,
-    ) -> FieldResult<Vec<Room>> {
-        rooms::table
-            .load::<crate::models::Room>(&executor.context().db_con)
-            .and_then(|rooms| Ok(rooms.into_iter().map_into().collect()))
-            .map_err(Into::into)
-    }
-
     fn field_cards(
         &self,
         executor: &Executor<'_, Context>,
@@ -95,62 +84,7 @@ impl QueryFields for Query {
     }
 }
 
-impl MutationFields for Mutation {
-    fn field_create_room(
-        &self,
-        executor: &Executor<'_, Context>,
-        _trail: &QueryTrail<'_, Room, Walked>,
-        name: String,
-        player: String,
-    ) -> FieldResult<Room> {
-        let new_room = crate::models::NewRoom {
-            name: name,
-            players: vec![player],
-        };
-
-        diesel::insert_into(rooms::table)
-            .values(&new_room)
-            .get_result::<crate::models::Room>(&executor.context().db_con)
-            .map(Into::into)
-            .map_err(Into::into)
-    }
-
-    fn field_enter_room(
-        &self,
-        executor: &Executor<'_, Context>,
-        _trail: &QueryTrail<'_, Room, Walked>,
-        player: String,
-        room_id: i32,
-    ) -> FieldResult<Room> {
-        let target = rooms::table.find(room_id);
-        let mut players: Vec<String> = target
-            .first::<crate::models::Room>(&executor.context().db_con)
-            .unwrap()
-            .players; // get players in table
-
-        players.push(player); // add new player
-
-        diesel::update(target)
-            .set(rooms::dsl::players.eq(players)) // set updated players in table
-            .get_result::<crate::models::Room>(&executor.context().db_con)
-            .map(Into::into)
-            .map_err(Into::into)
-    }
-
-    fn field_remove_room(
-        &self,
-        executor: &Executor<'_, Context>,
-        _trail: &QueryTrail<'_, Room, Walked>,
-        room_id: i32,
-    ) -> FieldResult<Room> {
-        let target = rooms::table.find(room_id);
-
-        diesel::delete(target)
-            .get_result::<crate::models::Room>(&executor.context().db_con)
-            .map(Into::into)
-            .map_err(Into::into)
-    }
-}
+impl MutationFields for Mutation {}
 
 impl RoomFields for Room {
     fn field_id(&self, _: &Executor<'_, Context>) -> FieldResult<juniper::ID> {
