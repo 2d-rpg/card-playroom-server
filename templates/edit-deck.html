@@ -23,8 +23,10 @@
                     {% for card in cards %}
                     <tr>
                         <td>{{ card.id }}</td>
-                        <td><a href="{{ card.face }}">{{ card.face | split(pat="/") | last }}</td>
-                        <td><a href="{{ card.back }}">{{ card.back | split(pat="/") | last }}</td>
+                        <td><img src="{{ card.face }}" width="40" height="60" /><a href="{{ card.face }}">{{ card.face |
+                                split(pat="/") | last }}</td>
+                        <td><img src="{{ card.back }}" width="40" height="60" /><a href="{{ card.back }}">{{ card.back |
+                                split(pat="/") | last }}</td>
                         <td><button class="btn btn-primary card-move-button" id="move-{{ card.id }}"
                                 data-face="{{ card.face }}" data-back="{{ card.back }}">＞</button></td>
                     </tr>
@@ -71,8 +73,10 @@
                             <td><button type="button" class="btn btn-primary card-remove-button"
                                     id="remove-{{ card_in_deck.card_id }}">＜</button></td>
                             <td>{{ card_in_deck.card_id }}</td>
-                            <td><a href="{{ card_in_deck.face }}">{{ card_in_deck.face | split(pat="/") | last }}</td>
-                            <td><a href="{{ card_in_deck.back }}">{{ card_in_deck.back | split(pat="/") | last }}</td>
+                            <td><img src="{{ card_in_deck.face }}" width="40" height="60" /><a
+                                    href="{{ card_in_deck.face }}">{{ card_in_deck.face | split(pat="/") | last }}</td>
+                            <td><img src="{{ card_in_deck.back }}" width="40" height="60" /><a
+                                    href="{{ card_in_deck.back }}">{{ card_in_deck.back | split(pat="/") | last }}</td>
                             <td>
                                 <input type="number" class="card-num-input" name="{{ card_in_deck.card_id }}"
                                     id="num-{{ card_in_deck.card_id }}" value="{{ card_in_deck.num }}" required>
