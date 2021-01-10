@@ -144,10 +144,16 @@
                             <td><button type="button" class="btn btn-primary card-remove-button"
                                     id="remove-${cardId}">＜</button></td>
                             <td>${cardId}</td>
-                            <td><a href="${cardFace}">${cardFace}</td>
-                            <td><a href="${cardBack}">${cardBack}</td>
+                            <td><img src="${cardFace}" width="40" height="60"
+                                    onmouseover="this.width=320; this.height=480"
+                                    onmouseout="this.width=40; this.height=60" />
+                                <a href="${cardFace}">${cardFace.split("/").pop().split(".").shift().slice(0, 10)}</td>
+                            <td><img src="${cardBack}" width="40" height="60"
+                                    onmouseover="this.width=320; this.height=480"
+                                    onmouseout="this.width=40; this.height=60" />
+                                <a href="${cardBack}">${cardBack.split("/").pop().split(".").shift().slice(0, 10)}</td>
                             <td>
-                                <input type="number" class="card-num-input text-danger" 
+                                <input type="number" class="card-num-input text-danger" style="width:50px;"
                                     name="${cardId}" id="num-${cardId}" value="1" required>
                             </td>
                         </tr>
