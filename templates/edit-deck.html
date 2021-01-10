@@ -9,35 +9,44 @@
                 サーバー内のデッキを編集
             </p>
             <h2>カード一覧</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">表画像</th>
-                        <th scope="col">裏画像</th>
-                        <th scope="col">デッキへ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!--TODO リンクにホバーすると画像を表示するようにする -->
-                    {% for card in cards %}
-                    <tr>
-                        <td>{{ card.id }}</td>
-                        <td><a href="{{ card.face }}">{{ card.face }}</td>
-                        <td><a href="{{ card.back }}">{{ card.back }}</td>
-                        <td><button class="btn btn-primary card-move-button" id="move-{{ card.id }}"
-                                data-face="{{ card.face }}" data-back="{{ card.back }}">＞</button></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div style="height:700px; overflow-y:scroll;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">表画像</th>
+                            <th scope="col">裏画像</th>
+                            <th scope="col">デッキへ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for card in cards %}
+                        <tr>
+                            <td>{{ card.id }}</td>
+                            <td><img class="lazyload" data-src="{{ card.face }}" width="40" height="60"
+                                    onmouseover="this.width=320; this.height=480"
+                                    onmouseout="this.width=40; this.height=60" /><a href="{{ card.face }}">{{
+                                    card.face |
+                                    split(pat="/") | last | split(pat=".") | first | truncate(length=10) }}</td>
+                            <td><img class="lazyload" data-src="{{ card.back }}" width="40" height="60"
+                                    onmouseover="this.width=320; this.height=480"
+                                    onmouseout="this.width=40; this.height=60" /><a href="{{ card.back }}">{{ card.back
+                                    |
+                                    split(pat="/") | last | split(pat=".") | first | truncate(length=10) }}</td>
+                            <td><button class="btn btn-primary card-move-button" id="move-{{ card.id }}"
+                                    data-face="{{ card.face }}" data-back="{{ card.back }}">＞</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div class="col-sm-6">
             {% if not is_deck_selected %}
             <h2>デッキを作成してください</h2>
             <a href="/deck">デッキ作成</a>
             {% else %}
-            <h2>{{ selected_deck_name }}のカード一覧</h2>
+            <h2>{{ selected_deck_name }}</h2>
             <div class="form-group w-25 m-0">
                 <select id="deckSelect" class="form-control" name="deck_id">
                     {% for deck in decks %}
@@ -55,32 +64,45 @@
                 <p>
                     {{ edit_deck_confirm }}
                 </p>
-                <table class="table" id="cardsInDeck" style="margin-top: 1.25rem!important;">
-                    <thead>
-                        <tr>
-                            <th scope="col">削除</th>
-                            <th scope="col">ID</th>
-                            <th scope="col">表画像</th>
-                            <th scope="col">裏画像</th>
-                            <th scope="col">枚数</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for card_in_deck in cards_in_deck %}
-                        <tr class="card-in-deck" id="tr-{{ card_in_deck.card_id }}">
-                            <td><button type="button" class="btn btn-primary card-remove-button"
-                                    id="remove-{{ card_in_deck.card_id }}">＜</button></td>
-                            <td>{{ card_in_deck.card_id }}</td>
-                            <td><a href="{{ card_in_deck.face }}">{{ card_in_deck.face }}</td>
-                            <td><a href="{{ card_in_deck.back }}">{{ card_in_deck.back }}</td>
-                            <td>
-                                <input type="number" class="card-num-input" name="{{ card_in_deck.card_id }}"
-                                    id="num-{{ card_in_deck.card_id }}" value="{{ card_in_deck.num }}" required>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div style="height:700px; overflow-y:scroll;">
+                    <table class="table" id="cardsInDeck" style="margin-top: 1.25rem!important;">
+                        <thead>
+                            <tr>
+                                <th scope="col">削除</th>
+                                <th scope="col">ID</th>
+                                <th scope="col">表画像</th>
+                                <th scope="col">裏画像</th>
+                                <th scope="col">枚数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for card_in_deck in cards_in_deck %}
+                            <tr class="card-in-deck" id="tr-{{ card_in_deck.card_id }}">
+                                <td><button type="button" class="btn btn-primary card-remove-button"
+                                        id="remove-{{ card_in_deck.card_id }}">＜</button></td>
+                                <td>{{ card_in_deck.card_id }}</td>
+                                <td><img class="lazyload" data-src="{{ card_in_deck.face }}" width="40" height="60"
+                                        onmouseover="this.width=320; this.height=480"
+                                        onmouseout="this.width=40; this.height=60" /><a
+                                        href="{{ card_in_deck.face }}">{{
+                                        card_in_deck.face | split(pat="/") | last | split(pat=".") | first |
+                                        truncate(length=10) }}</td>
+                                <td><img class="lazyload" data-src="{{ card_in_deck.back }}" width="40" height="60"
+                                        onmouseover="this.width=320; this.height=480"
+                                        onmouseout="this.width=40; this.height=60" /><a
+                                        href="{{ card_in_deck.back }}">{{
+                                        card_in_deck.back | split(pat="/") | last | split(pat=".") | first |
+                                        truncate(length=10) }}</td>
+                                <td>
+                                    <input type="number" class="card-num-input" style="width:50px;"
+                                        name="{{ card_in_deck.card_id }}" id="num-{{ card_in_deck.card_id }}"
+                                        value="{{ card_in_deck.num }}" required>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </form>
             {% endif %}
         </div>
@@ -88,6 +110,9 @@
 </div>
 <script>
     window.onload = function () {
+        // 画像の遅延読み込み
+        lazyload();
+
         // 編集するデッキの変更
         const deckSelect = document.getElementById("deckSelect");
         deckSelect.addEventListener("change", function (event) {
@@ -119,10 +144,16 @@
                             <td><button type="button" class="btn btn-primary card-remove-button"
                                     id="remove-${cardId}">＜</button></td>
                             <td>${cardId}</td>
-                            <td><a href="${cardFace}">${cardFace}</td>
-                            <td><a href="${cardBack}">${cardBack}</td>
+                            <td><img src="${cardFace}" width="40" height="60"
+                                    onmouseover="this.width=320; this.height=480"
+                                    onmouseout="this.width=40; this.height=60" />
+                                <a href="${cardFace}">${cardFace.split("/").pop().split(".").shift().slice(0, 10)}</td>
+                            <td><img src="${cardBack}" width="40" height="60"
+                                    onmouseover="this.width=320; this.height=480"
+                                    onmouseout="this.width=40; this.height=60" />
+                                <a href="${cardBack}">${cardBack.split("/").pop().split(".").shift().slice(0, 10)}</td>
                             <td>
-                                <input type="number" class="card-num-input text-danger" 
+                                <input type="number" class="card-num-input text-danger" style="width:50px;"
                                     name="${cardId}" id="num-${cardId}" value="1" required>
                             </td>
                         </tr>
