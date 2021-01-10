@@ -302,9 +302,18 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 .then(|res, _, ctx| {
                                     match res {
                                         Ok(rooms) => {
-                                            for room in rooms {
-                                                ctx.text(room);
+                                            let mut data = String::from("{ \"data\": [");
+                                            for (index, room) in rooms.iter().enumerate() {
+                                                data.push_str("{ \"name\": \"");
+                                                data.push_str(&room);
+                                                if index == rooms.len() - 1 {
+                                                    data.push_str("\" } ");
+                                                } else {
+                                                    data.push_str("\" }, ");
+                                                }
                                             }
+                                            data.push_str("] }");
+                                            ctx.text(data);
                                         }
                                         _ => println!("Something is wrong"),
                                     }
