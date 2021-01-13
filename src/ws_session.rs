@@ -32,6 +32,7 @@ pub struct Message(pub String);
 pub struct Room {
     pub id: u32,
     pub name: String,
+    pub num: usize,
 }
 
 /// `ChatSession` actor is responsible for tcp peer communications.
@@ -374,6 +375,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                                         &serde_json::to_string(&Room {
                                                             id: createroom.id,
                                                             name: createroom.roomname,
+                                                            num: 0
                                                         })
                                                         .unwrap(),
                                                     );

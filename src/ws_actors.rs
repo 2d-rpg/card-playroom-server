@@ -198,6 +198,7 @@ impl Handler<ListRooms> for ChatServer {
             let room = ws_session::Room {
                 id: *id,
                 name: name.clone(),
+                num: self.roomusers.get(id).unwrap().len(),
             };
             rooms.push(room);
         }
