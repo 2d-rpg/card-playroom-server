@@ -17,7 +17,7 @@ pub enum ChatRequest {
     /// List rooms
     List,
     /// Join rooms
-    Join(usize),
+    Join(u32),
     /// Send message
     Message(String),
     /// Ping
@@ -35,7 +35,7 @@ pub enum ChatResponse {
     Rooms(Vec<ws_session::Room>),
 
     /// Joined
-    Joined(usize),
+    Joined(u32),
 
     /// Message
     Message(String),

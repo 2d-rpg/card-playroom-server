@@ -33,7 +33,7 @@ pub struct Message {
     /// Peer message
     pub msg: String,
     /// Room id
-    pub room: usize,
+    pub room: u32,
 }
 
 /// List of available rooms
@@ -50,7 +50,7 @@ pub struct Join {
     /// Client id
     pub id: usize,
     /// Room id
-    pub roomid: usize,
+    pub roomid: u32,
 }
 
 pub struct Create {
@@ -61,7 +61,7 @@ pub struct Create {
 }
 
 pub struct CreateRoom {
-    pub id: usize,
+    pub id: u32,
     pub roomname: String,
     pub exists: bool,
 }
@@ -74,8 +74,8 @@ impl actix::Message for Create {
 /// session. implementation is super primitive
 pub struct ChatServer {
     sessions: HashMap<usize, Recipient<ws_session::Message>>,
-    roomusers: HashMap<usize, HashSet<usize>>,
-    roomnames: HashMap<String, usize>,
+    roomusers: HashMap<u32, HashSet<usize>>,
+    roomnames: HashMap<String, u32>,
     rng: ThreadRng,
 }
 
@@ -85,7 +85,7 @@ impl Default for ChatServer {
         let mut roomusers = HashMap::new();
         let mut roomnames = HashMap::new();
         let mut rng = rand::thread_rng();
-        let main_room_id = rng.gen::<usize>();
+        let main_room_id = rng.gen::<u32>();
         roomusers.insert(main_room_id, HashSet::new());
         roomnames.insert("Main".to_owned(), main_room_id);
 
@@ -100,7 +100,7 @@ impl Default for ChatServer {
 
 impl ChatServer {
     /// Send message to all users in the room
-    fn send_message(&self, room: &usize, message: &str, skip_id: usize) {
+    fn send_message(&self, room: &u32, message: &str, skip_id: usize) {
         if let Some(sessions) = self.roomusers.get(room) {
             for id in sessions {
                 println!("{}", id);
@@ -132,21 +132,21 @@ impl Handler<Connect> for ChatServer {
         println!("Someone joined");
 
         // notify all users in same room
-        self.send_message(
-            self.roomnames.get(&"Main".to_owned()).unwrap(),
-            "Someone joined",
-            0,
-        );
+        // self.send_message(
+        //     self.roomnames.get(&"Main".to_owned()).unwrap(),
+        //     "Someone joined",
+        //     0,
+        // );
 
         // register session with random id
         let id = self.rng.gen::<usize>();
         self.sessions.insert(id, msg.addr);
 
         // auto join session to Main room
-        self.roomusers
-            .get_mut(self.roomnames.get(&"Main".to_owned()).unwrap())
-            .unwrap()
-            .insert(id);
+        // self.roomusers
+        //     .get_mut(self.roomnames.get(&"Main".to_owned()).unwrap())
+        //     .unwrap()
+        //     .insert(id);
 
         // send id back
         id
@@ -160,7 +160,7 @@ impl Handler<Disconnect> for ChatServer {
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
         println!("Someone disconnected");
 
-        let mut rooms: Vec<&usize> = Vec::new();
+        let mut rooms: Vec<&u32> = Vec::new();
 
         // remove address
         if self.sessions.remove(&msg.id).is_some() {
@@ -246,11 +246,11 @@ impl Handler<Create> for ChatServer {
     type Result = MessageResult<Create>;
 
     fn handle(&mut self, msg: Create, _: &mut Context<Self>) -> Self::Result {
-        let Create { id, roomname } = msg;
+        let Create { id: _, roomname } = msg;
 
         if self.roomnames.get_mut(&roomname).is_none() {
             // create room if the named room does not exist
-            let roomid = self.rng.gen::<usize>();
+            let roomid = self.rng.gen::<u32>();
             self.roomnames.insert(roomname.clone(), roomid);
             self.roomusers.insert(roomid, HashSet::new());
             // self.roomusers.get_mut(&roomid).unwrap().insert(id);

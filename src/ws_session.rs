@@ -30,7 +30,7 @@ pub struct Message(pub String);
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Room {
-    pub id: usize,
+    pub id: u32,
     pub name: String,
 }
 
@@ -44,7 +44,7 @@ pub struct ChatSession {
     /// connection.
     hb: Instant,
     /// joined room
-    room: usize,
+    room: Option<u32>,
     /// Framed wrapper
     framed: actix::io::FramedWrite<ChatResponse, WriteHalf<TcpStream>, ChatCodec>,
 }
@@ -113,7 +113,7 @@ impl StreamHandler<Result<ChatRequest, io::Error>> for ChatSession {
             }
             Ok(ChatRequest::Join(roomid)) => {
                 println!("Join to room id: {}", roomid);
-                self.room = roomid;
+                self.room = Some(roomid);
                 self.addr.do_send(ws_actors::Join {
                     id: self.id,
                     roomid: roomid,
@@ -123,11 +123,13 @@ impl StreamHandler<Result<ChatRequest, io::Error>> for ChatSession {
             Ok(ChatRequest::Message(message)) => {
                 // send message to chat server
                 println!("Peer message: {}", message);
-                self.addr.do_send(ws_actors::Message {
-                    id: self.id,
-                    msg: message,
-                    room: self.room,
-                })
+                if let Some(room) = self.room {
+                    self.addr.do_send(ws_actors::Message {
+                        id: self.id,
+                        msg: message,
+                        room: room,
+                    })
+                }
             }
             // we update heartbeat time on ping from peer
             Ok(ChatRequest::Ping) => self.hb = Instant::now(),
@@ -157,7 +159,7 @@ impl ChatSession {
             id: 0,
             addr,
             hb: Instant::now(),
-            room: 0, // TODO どうやってChatServerからroomidを取得するか
+            room: None, // defaultルームへの割り当てなし
             framed,
         }
     }
@@ -219,7 +221,7 @@ struct WsChatSession {
     /// otherwise we drop connection.
     hb: Instant,
     /// joined room
-    room: usize,
+    room: Option<u32>,
     /// peer name
     name: Option<String>,
     /// Chat server
@@ -275,6 +277,7 @@ impl Handler<Message> for WsChatSession {
 
 /// WebSocket message handler
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
+    // TODO: "/command"形式ではなく、json形式に揃える
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         let msg = match msg {
             Err(error) => {
@@ -338,10 +341,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         }
                         "/join" => {
                             if v.len() == 2 {
-                                self.room = v[1].parse().unwrap();
+                                self.room = Some(v[1].parse().unwrap());
                                 self.addr.do_send(ws_actors::Join {
                                     id: self.id,
-                                    roomid: self.room,
+                                    roomid: v[1].parse().unwrap(),
                                 });
 
                                 ctx.text("joined");
@@ -403,11 +406,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         m.to_owned()
                     };
                     // send message to chat server
-                    self.addr.do_send(ws_actors::Message {
-                        id: self.id,
-                        msg,
-                        room: self.room.clone(),
-                    })
+                    if let Some(room) = self.room {
+                        self.addr.do_send(ws_actors::Message {
+                            id: self.id,
+                            msg,
+                            room: room,
+                        })
+                    }
                 }
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),
@@ -462,7 +467,7 @@ async fn ws_route(
         WsChatSession {
             id: 0,
             hb: Instant::now(),
-            room: 0, // TODO: ChatServerからどうやってroomidを取得するか
+            room: None, // defaultルームへの割り当てなし
             name: None,
             addr: srv.get_ref().clone(),
         },
