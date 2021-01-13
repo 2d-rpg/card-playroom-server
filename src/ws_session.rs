@@ -16,6 +16,7 @@ use actix_web_actors::ws;
 
 use crate::codec::{ChatCodec, ChatRequest, ChatResponse};
 use crate::ws_actors::{self, ChatServer};
+use serde::{Deserialize, Serialize};
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -27,6 +28,12 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 #[rtype(result = "()")]
 pub struct Message(pub String);
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Room {
+    pub id: usize,
+    pub name: String,
+}
+
 /// `ChatSession` actor is responsible for tcp peer communications.
 pub struct ChatSession {
     /// unique session id
@@ -37,7 +44,7 @@ pub struct ChatSession {
     /// connection.
     hb: Instant,
     /// joined room
-    room: String,
+    room: usize,
     /// Framed wrapper
     framed: actix::io::FramedWrite<ChatResponse, WriteHalf<TcpStream>, ChatCodec>,
 }
@@ -104,14 +111,14 @@ impl StreamHandler<Result<ChatRequest, io::Error>> for ChatSession {
                 // .wait(ctx) pauses all events in context,
                 // so actor wont receive any new messages until it get list of rooms back
             }
-            Ok(ChatRequest::Join(name)) => {
-                println!("Join to room: {}", name);
-                self.room = name.clone();
+            Ok(ChatRequest::Join(roomid)) => {
+                println!("Join to room id: {}", roomid);
+                self.room = roomid;
                 self.addr.do_send(ws_actors::Join {
                     id: self.id,
-                    name: name.clone(),
+                    roomid: roomid,
                 });
-                self.framed.write(ChatResponse::Joined(name));
+                self.framed.write(ChatResponse::Joined(roomid));
             }
             Ok(ChatRequest::Message(message)) => {
                 // send message to chat server
@@ -119,7 +126,7 @@ impl StreamHandler<Result<ChatRequest, io::Error>> for ChatSession {
                 self.addr.do_send(ws_actors::Message {
                     id: self.id,
                     msg: message,
-                    room: self.room.clone(),
+                    room: self.room,
                 })
             }
             // we update heartbeat time on ping from peer
@@ -150,7 +157,7 @@ impl ChatSession {
             id: 0,
             addr,
             hb: Instant::now(),
-            room: "Main".to_owned(),
+            room: 0, // TODO どうやってChatServerからroomidを取得するか
             framed,
         }
     }
@@ -180,9 +187,9 @@ impl ChatSession {
 
 /// Define tcp server that will accept incoming tcp connection and create
 /// chat actors.
-pub fn tcp_server(_s: &str, server: Addr<ChatServer>) {
+pub fn tcp_server(s: &str, server: Addr<ChatServer>) {
     // Create server listener
-    let addr = net::SocketAddr::from_str("127.0.0.1:12345").unwrap();
+    let addr = net::SocketAddr::from_str(s).unwrap();
 
     actix_web::rt::spawn(async move {
         let server = server.clone();
@@ -212,7 +219,7 @@ struct WsChatSession {
     /// otherwise we drop connection.
     hb: Instant,
     /// joined room
-    room: String,
+    room: usize,
     /// peer name
     name: Option<String>,
     /// Chat server
@@ -270,7 +277,8 @@ impl Handler<Message> for WsChatSession {
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         let msg = match msg {
-            Err(_) => {
+            Err(error) => {
+                println!("{}", error);
                 ctx.stop();
                 return;
             }
@@ -304,12 +312,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                         Ok(rooms) => {
                                             let mut data = String::from("{ \"data\": [");
                                             for (index, room) in rooms.iter().enumerate() {
-                                                data.push_str("{ \"name\": \"");
-                                                data.push_str(&room);
+                                                // data.push_str("{ \"name\": \"");
+                                                data.push_str(
+                                                    &serde_json::to_string(room).unwrap(),
+                                                );
                                                 if index == rooms.len() - 1 {
-                                                    data.push_str("\" } ");
+                                                    // data.push_str("\" } ");
+                                                    data.push_str(" ");
                                                 } else {
-                                                    data.push_str("\" }, ");
+                                                    // data.push_str("\" }, ");
+                                                    data.push_str(", ");
                                                 }
                                             }
                                             data.push_str("] }");
@@ -326,13 +338,51 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         }
                         "/join" => {
                             if v.len() == 2 {
-                                self.room = v[1].to_owned();
+                                self.room = v[1].parse().unwrap();
                                 self.addr.do_send(ws_actors::Join {
                                     id: self.id,
-                                    name: self.room.clone(),
+                                    roomid: self.room,
                                 });
 
                                 ctx.text("joined");
+                            } else {
+                                ctx.text("!!! room id is required");
+                            }
+                        }
+                        "/create" => {
+                            if v.len() == 2 {
+                                // self.room = v[1].to_owned();
+                                self.addr
+                                    .send(ws_actors::Create {
+                                        id: self.id,
+                                        roomname: v[1].to_owned(),
+                                    })
+                                    .into_actor(self)
+                                    .then(|res, _, ctx| {
+                                        match res {
+                                            Ok(createroom) => {
+                                                if createroom.exists {
+                                                    ctx.text("{ \"status\": \"error\"}");
+                                                } else {
+                                                    let mut data = String::from(
+                                                        "{ \"status\": \"ok\", \"event\": \"create\", \"data\": ",
+                                                    );
+                                                    data.push_str(
+                                                        &serde_json::to_string(&Room {
+                                                            id: createroom.id,
+                                                            name: createroom.roomname,
+                                                        })
+                                                        .unwrap(),
+                                                    );
+                                                    data.push_str(" }");
+                                                    ctx.text(data);
+                                                }
+                                            }
+                                            _ => println!("Something is wrong"),
+                                        }
+                                        fut::ready(())
+                                    })
+                                    .wait(ctx)
                             } else {
                                 ctx.text("!!! room name is required");
                             }
@@ -412,7 +462,7 @@ async fn ws_route(
         WsChatSession {
             id: 0,
             hb: Instant::now(),
-            room: "Main".to_string(), // TODO: Optionにするか検討
+            room: 0, // TODO: ChatServerからどうやってroomidを取得するか
             name: None,
             addr: srv.get_ref().clone(),
         },

@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use std::io;
 
+use crate::ws_session;
 use actix::prelude::*;
 use actix_codec::{Decoder, Encoder};
 use byteorder::{BigEndian, ByteOrder};
@@ -16,7 +17,7 @@ pub enum ChatRequest {
     /// List rooms
     List,
     /// Join rooms
-    Join(String),
+    Join(usize),
     /// Send message
     Message(String),
     /// Ping
@@ -31,10 +32,10 @@ pub enum ChatResponse {
     Ping,
 
     /// List of rooms
-    Rooms(Vec<String>),
+    Rooms(Vec<ws_session::Room>),
 
     /// Joined
-    Joined(String),
+    Joined(usize),
 
     /// Message
     Message(String),
