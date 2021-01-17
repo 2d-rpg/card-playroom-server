@@ -17,6 +17,7 @@ use actix_web_actors::ws;
 use crate::codec::{ChatCodec, ChatRequest, ChatResponse};
 use crate::ws_actors::{self, ChatServer};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -29,8 +30,8 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 pub struct Message(pub String);
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Room {
-    pub id: u32,
+pub struct RoomInfo {
+    pub id: Uuid,
     pub name: String,
     pub num: usize,
 }
@@ -38,14 +39,14 @@ pub struct Room {
 /// `ChatSession` actor is responsible for tcp peer communications.
 pub struct ChatSession {
     /// unique session id
-    id: usize,
+    id: Uuid,
     /// this is address of chat server
     addr: Addr<ChatServer>,
     /// Client must send ping at least once per 10 seconds, otherwise we drop
     /// connection.
     hb: Instant,
     /// joined room
-    room: Option<u32>,
+    room: Option<Uuid>,
     /// Framed wrapper
     framed: actix::io::FramedWrite<ChatResponse, WriteHalf<TcpStream>, ChatCodec>,
 }
@@ -116,8 +117,8 @@ impl StreamHandler<Result<ChatRequest, io::Error>> for ChatSession {
                 println!("Join to room id: {}", roomid);
                 self.room = Some(roomid);
                 self.addr.do_send(ws_actors::Join {
-                    id: self.id,
-                    roomid: roomid,
+                    session_id: self.id,
+                    room_id: roomid,
                 });
                 self.framed.write(ChatResponse::Joined(roomid));
             }
@@ -157,7 +158,7 @@ impl ChatSession {
         framed: actix::io::FramedWrite<ChatResponse, WriteHalf<TcpStream>, ChatCodec>,
     ) -> ChatSession {
         ChatSession {
-            id: 0,
+            id: Uuid::new_v4(),
             addr,
             hb: Instant::now(),
             room: None, // defaultルームへの割り当てなし
@@ -217,12 +218,12 @@ pub fn tcp_server(s: &str, server: Addr<ChatServer>) {
 
 struct WsChatSession {
     /// unique session id
-    id: usize,
+    id: Uuid,
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
     /// otherwise we drop connection.
     hb: Instant,
     /// joined room
-    room: Option<u32>,
+    room: Option<Uuid>,
     /// peer name
     name: Option<String>,
     /// Chat server
@@ -342,10 +343,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         }
                         "/join" => {
                             if v.len() == 2 {
-                                self.room = Some(v[1].parse().unwrap());
+                                self.room = Some(Uuid::parse_str(v[1]).unwrap());
                                 self.addr.do_send(ws_actors::Join {
-                                    id: self.id,
-                                    roomid: v[1].parse().unwrap(),
+                                    session_id: self.id,
+                                    room_id: Uuid::parse_str(v[1]).unwrap(),
                                 });
 
                                 ctx.text("joined");
@@ -358,30 +359,26 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 // self.room = v[1].to_owned();
                                 self.addr
                                     .send(ws_actors::Create {
-                                        id: self.id,
-                                        roomname: v[1].to_owned(),
+                                        session_id: self.id,
+                                        room_name: v[1].to_owned(),
                                     })
                                     .into_actor(self)
                                     .then(|res, _, ctx| {
                                         match res {
                                             Ok(createroom) => {
-                                                if createroom.exists {
-                                                    ctx.text("{ \"status\": \"error\"}");
-                                                } else {
                                                     let mut data = String::from(
                                                         "{ \"status\": \"ok\", \"event\": \"create\", \"data\": ",
                                                     );
                                                     data.push_str(
-                                                        &serde_json::to_string(&Room {
-                                                            id: createroom.id,
-                                                            name: createroom.roomname,
+                                                        &serde_json::to_string(&RoomInfo {
+                                                            id: createroom.room_id,
+                                                            name: createroom.room_name,
                                                             num: 0
                                                         })
                                                         .unwrap(),
                                                     );
                                                     data.push_str(" }");
                                                     ctx.text(data);
-                                                }
                                             }
                                             _ => println!("Something is wrong"),
                                         }
@@ -467,7 +464,7 @@ async fn ws_route(
     // start websocket
     ws::start(
         WsChatSession {
-            id: 0,
+            id: Uuid::new_v4(),
             hb: Instant::now(),
             room: None, // defaultルームへの割り当てなし
             name: None,

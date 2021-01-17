@@ -8,6 +8,7 @@ use byteorder::{BigEndian, ByteOrder};
 use bytes::{BufMut, BytesMut};
 use serde::{Deserialize, Serialize};
 use serde_json as json;
+use uuid::Uuid;
 
 /// Client request
 #[derive(Serialize, Deserialize, Debug, Message)]
@@ -17,7 +18,7 @@ pub enum ChatRequest {
     /// List rooms
     List,
     /// Join rooms
-    Join(u32),
+    Join(Uuid),
     /// Send message
     Message(String),
     /// Ping
@@ -32,10 +33,10 @@ pub enum ChatResponse {
     Ping,
 
     /// List of rooms
-    Rooms(Vec<ws_session::Room>),
+    Rooms(Vec<ws_session::RoomInfo>),
 
     /// Joined
-    Joined(u32),
+    Joined(Uuid),
 
     /// Message
     Message(String),
