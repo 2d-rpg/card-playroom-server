@@ -10,8 +10,10 @@ use actix_web::{error, web, Error, HttpResponse};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use futures::{StreamExt, TryStreamExt};
+use std::ffi::OsStr;
 use std::fs;
 use std::io::Write;
+use std::path::Path;
 use std::str;
 use tera::Tera;
 
@@ -112,8 +114,16 @@ async fn upload_back(
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
         let filename = content_type.get_filename().unwrap();
+        let mut filepath = format!("assets/back/{}", sanitize_filename::sanitize(&filename));
         // TODO ファイル名重複防止
-        let filepath = format!("assets/back/{}", sanitize_filename::sanitize(&filename));
+        dbg!(Path::new(&filepath).exists());
+        while Path::new(&filepath).exists() {
+            dbg!(&filepath);
+            let path = Path::new(&filepath);
+            let stem = path.file_stem().and_then(OsStr::to_str).unwrap();
+            let extension = path.extension().and_then(OsStr::to_str).unwrap();
+            filepath = format!("assets/back/{}_copy.{}", stem, extension);
+        }
         let mut f = web::block(|| std::fs::File::create(filepath))
             .await
             .unwrap();
