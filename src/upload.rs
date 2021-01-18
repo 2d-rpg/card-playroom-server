@@ -29,6 +29,7 @@ fn insert_to_ctx(
     return ctx.clone();
 }
 
+// 背面用の画像一覧をファイル名でソートして返す
 fn get_back_file_names() -> Vec<String> {
     let paths = fs::read_dir("assets/back").unwrap();
     let mut file_names: Vec<String> = Vec::new();
