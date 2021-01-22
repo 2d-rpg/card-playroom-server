@@ -71,13 +71,23 @@ impl actix::Message for Create {
     type Result = CreateRoom;
 }
 
-pub struct Room {
-    name: String,
-    users: HashSet<Uuid>,
-}
-
 pub struct Session {
     address: Recipient<ws_session::Message>,
+}
+
+pub struct Room {
+    name: String,
+    members: HashSet<Uuid>,
+}
+
+impl Room {
+    fn remove_member(&mut self, session_id: &Uuid) -> bool {
+        self.members.remove(session_id)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.members.is_empty()
+    }
 }
 
 /// `ChatServer` manages chat rooms and responsible for coordinating chat
@@ -95,7 +105,7 @@ impl Default for ChatServer {
         //     Uuid::new_v4(),
         //     Room {
         //         name: "メインルーム(デフォルト)".to_owned(),
-        //         users: HashSet::new(),
+        //         memebrs: HashSet::new(),
         //     },
         // );
 
@@ -109,8 +119,8 @@ impl Default for ChatServer {
 impl ChatServer {
     /// Send message to all users in the room
     fn send_message(&self, room: &Uuid, message: &str, skip_id: Uuid) {
-        if let Some(Room { name: _, users }) = self.rooms.get(room) {
-            for id in users {
+        if let Some(Room { name: _, members }) = self.rooms.get(room) {
+            for id in members {
                 println!("{}", id);
                 if *id != skip_id {
                     if let Some(Session { address }) = self.sessions.get(id) {
@@ -122,12 +132,48 @@ impl ChatServer {
         }
     }
 
+    fn send_all(&self, message: &str) {
+        for (_session_id, session) in &self.sessions {
+            let _ = session
+                .address
+                .do_send(ws_session::Message(message.to_owned()));
+        }
+    }
+
+    fn update_room_list(&self) {
+        let mut rooms = Vec::new();
+
+        for (room_id, Room { name, members }) in &self.rooms {
+            let room = ws_session::RoomInfo {
+                id: room_id.clone(),
+                name: name.to_owned(),
+                num: members.len(),
+            };
+            rooms.push(room);
+        }
+        let mut data = String::from("{ \"data\": [");
+        for (index, room) in rooms.iter().enumerate() {
+            // data.push_str("{ \"name\": \"");
+            data.push_str(&serde_json::to_string(room).unwrap());
+            if index == rooms.len() - 1 {
+                // data.push_str("\" } ");
+                data.push_str(" ");
+            } else {
+                // data.push_str("\" }, ");
+                data.push_str(", ");
+            }
+        }
+        data.push_str("] }");
+
+        self.send_all(&data);
+    }
+
     fn add_room(&mut self, session_id: &Uuid, room_name: &str) -> MessageResult<Create> {
         self.rooms.insert(
             session_id.clone(), // room id becomes room host session id
             Room {
                 name: room_name.to_owned(),
-                users: HashSet::new(),
+                members: HashSet::new(),
             },
         );
         MessageResult(CreateRoom {
@@ -145,6 +191,21 @@ impl ChatServer {
         self.sessions
             .insert(session_id, Session { address: address });
         session_id
+    }
+
+    fn remove_session(&mut self, msg: &Disconnect) -> Vec<Uuid> {
+        let mut rooms: Vec<Uuid> = Vec::new();
+        if self.sessions.remove(&msg.id).is_some() {
+            // remove session from all rooms
+            for (id, room) in &mut self.rooms {
+                if room.remove_member(&msg.id) {
+                    if room.is_empty() {
+                        rooms.push(id.clone());
+                    }
+                }
+            }
+        }
+        rooms
     }
 }
 
@@ -176,18 +237,13 @@ impl Handler<Disconnect> for ChatServer {
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
         println!("Someone disconnected");
 
-        let mut rooms: Vec<&Uuid> = Vec::new();
-
         // remove address
-        if self.sessions.remove(&msg.id).is_some() {
-            // remove session from all rooms
-            for (id, room) in &mut self.rooms {
-                if room.users.remove(&msg.id) {
-                    rooms.push(id);
-                }
-            }
+        // if a room host is disconnected, non-host member should close websocket
+        let room_ids = self.remove_session(&msg);
+        for room_id in room_ids {
+            self.remove_room(&room_id);
         }
-        // TODO if a room host is disconnected, non-host member should close websocket
+        self.update_room_list();
     }
 }
 
@@ -207,11 +263,11 @@ impl Handler<ListRooms> for ChatServer {
     fn handle(&mut self, _: ListRooms, _: &mut Context<Self>) -> Self::Result {
         let mut rooms = Vec::new();
 
-        for (id, room) in &self.rooms {
+        for (room_id, Room { name, members }) in &self.rooms {
             let room = ws_session::RoomInfo {
-                id: *id,
-                name: room.name.to_owned(),
-                num: room.users.len(),
+                id: room_id.clone(),
+                name: name.to_owned(),
+                num: members.len(),
             };
             rooms.push(room);
         }
@@ -256,7 +312,7 @@ impl Handler<Join> for ChatServer {
         self.rooms
             .get_mut(&room_id)
             .unwrap()
-            .users
+            .members
             .insert(session_id);
     }
 }
