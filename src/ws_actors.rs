@@ -42,7 +42,7 @@ pub struct Message {
 pub struct ListRooms;
 
 impl actix::Message for ListRooms {
-    type Result = Vec<ws_session::RoomInfo>;
+    type Result = ws_session::RoomInfoList;
 }
 
 /// Join room, if room does not exists create new one.
@@ -88,6 +88,19 @@ impl Room {
     fn is_empty(&self) -> bool {
         self.members.is_empty()
     }
+}
+
+pub struct MessageData {
+    event: String,
+    status: String,
+    data: DataType,
+    message: String,
+}
+
+pub enum DataType {
+    RoomList(ws_session::RoomInfoList),
+    Room(ws_session::RoomInfo),
+    Position(String),
 }
 
 /// `ChatServer` manages chat rooms and responsible for coordinating chat
@@ -152,17 +165,7 @@ impl ChatServer {
             rooms.push(room);
         }
         let mut data = String::from("{ \"data\": [");
-        for (index, room) in rooms.iter().enumerate() {
-            // data.push_str("{ \"name\": \"");
-            data.push_str(&serde_json::to_string(room).unwrap());
-            if index == rooms.len() - 1 {
-                // data.push_str("\" } ");
-                data.push_str(" ");
-            } else {
-                // data.push_str("\" }, ");
-                data.push_str(", ");
-            }
-        }
+        data.push_str(&serde_json::to_string(&ws_session::RoomInfoList { rooms }).unwrap());
         data.push_str("] }");
 
         self.send_all(&data);
@@ -272,7 +275,7 @@ impl Handler<ListRooms> for ChatServer {
             rooms.push(room);
         }
 
-        MessageResult(rooms)
+        MessageResult(ws_session::RoomInfoList { rooms })
     }
 }
 

@@ -36,6 +36,11 @@ pub struct RoomInfo {
     pub num: usize,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RoomInfoList {
+    pub rooms: Vec<RoomInfo>,
+}
+
 /// `ChatSession` actor is responsible for tcp peer communications.
 pub struct ChatSession {
     /// unique session id
@@ -316,19 +321,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     match res {
                                         Ok(rooms) => {
                                             let mut data = String::from("{ \"data\": [");
-                                            for (index, room) in rooms.iter().enumerate() {
-                                                // data.push_str("{ \"name\": \"");
-                                                data.push_str(
-                                                    &serde_json::to_string(room).unwrap(),
-                                                );
-                                                if index == rooms.len() - 1 {
-                                                    // data.push_str("\" } ");
-                                                    data.push_str(" ");
-                                                } else {
-                                                    // data.push_str("\" }, ");
-                                                    data.push_str(", ");
-                                                }
-                                            }
+                                            data.push_str(&serde_json::to_string(&rooms).unwrap());
                                             data.push_str("] }");
                                             ctx.text(data);
                                         }

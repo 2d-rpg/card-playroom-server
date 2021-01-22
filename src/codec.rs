@@ -33,7 +33,7 @@ pub enum ChatResponse {
     Ping,
 
     /// List of rooms
-    Rooms(Vec<ws_session::RoomInfo>),
+    Rooms(ws_session::RoomInfoList),
 
     /// Joined
     Joined(Uuid),
