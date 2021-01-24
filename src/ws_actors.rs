@@ -90,19 +90,6 @@ impl Room {
     }
 }
 
-pub struct MessageData {
-    event: String,
-    status: String,
-    data: DataType,
-    message: String,
-}
-
-pub enum DataType {
-    RoomList(ws_session::RoomInfoList),
-    Room(ws_session::RoomInfo),
-    Position(String),
-}
-
 /// `ChatServer` manages chat rooms and responsible for coordinating chat
 /// session. implementation is super primitive
 pub struct ChatServer {
@@ -112,16 +99,6 @@ pub struct ChatServer {
 
 impl Default for ChatServer {
     fn default() -> ChatServer {
-        // TODO default room 必要？
-        // let mut rooms = HashMap::new();
-        // rooms.insert(
-        //     Uuid::new_v4(),
-        //     Room {
-        //         name: "メインルーム(デフォルト)".to_owned(),
-        //         memebrs: HashSet::new(),
-        //     },
-        // );
-
         ChatServer {
             sessions: HashMap::new(),
             rooms: HashMap::new(),
@@ -173,7 +150,8 @@ impl ChatServer {
 
     fn add_room(&mut self, session_id: &Uuid, room_name: &str) -> MessageResult<Create> {
         self.rooms.insert(
-            session_id.clone(), // room id becomes room host session id
+            // room id becomes room host session id
+            session_id.clone(),
             Room {
                 name: room_name.to_owned(),
                 members: HashSet::new(),
@@ -289,25 +267,6 @@ impl Handler<Join> for ChatServer {
             session_id,
             room_id,
         } = msg;
-        // let mut rooms = Vec::new();
-
-        // remove session from all rooms
-        // for (room_id, sessions) in &mut self.roomusers {
-        //     if sessions.remove(&id) {
-        //         rooms.push(room_id);
-        //     }
-        // }
-        // send message to other users
-        // for room in rooms {
-        //     self.send_message(&room, "Someone disconnected", 0);
-        // }
-
-        // create room if the named room does not exist
-        // if self.roomnames.get_mut(&roomid).is_none() {
-        //     let roomid = self.rng.gen::<usize>();
-        //     self.roomnames.insert(name.clone(), roomid);
-        //     self.roomusers.insert(roomid, HashSet::new());
-        // }
 
         // send all users in the room except self
         self.send_message(&room_id, "Someone connected", session_id);

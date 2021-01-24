@@ -166,7 +166,8 @@ impl ChatSession {
             id: Uuid::new_v4(),
             addr,
             hb: Instant::now(),
-            room: None, // defaultルームへの割り当てなし
+            // defaultルームへの割り当てなし
+            room: None,
             framed,
         }
     }
