@@ -320,9 +320,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 .then(|res, _, ctx| {
                                     match res {
                                         Ok(rooms) => {
-                                            let mut data = String::from("{ \"data\": [");
+                                            let mut data = String::from("{ \"data\": ");
                                             data.push_str(&serde_json::to_string(&rooms).unwrap());
-                                            data.push_str("] }");
+                                            data.push_str(" }");
                                             ctx.text(data);
                                         }
                                         _ => println!("Something is wrong"),

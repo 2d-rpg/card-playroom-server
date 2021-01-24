@@ -164,9 +164,9 @@ impl ChatServer {
             };
             rooms.push(room);
         }
-        let mut data = String::from("{ \"data\": [");
+        let mut data = String::from("{ \"data\": ");
         data.push_str(&serde_json::to_string(&ws_session::RoomInfoList { rooms }).unwrap());
-        data.push_str("] }");
+        data.push_str(" }");
 
         self.send_all(&data);
     }
