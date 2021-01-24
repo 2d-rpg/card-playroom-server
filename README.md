@@ -14,17 +14,16 @@ git clone https://github.com/2d-rpg/card-playroom-server.git
 code card-playroom-server
 ```
 
-以下 Docker コンテナ上で実行
+右下の通知欄でDockerコンテナ上でプロジェクトを開くか聞いてくるのでReopen in Container を選択するとDockerコンテナが作成され，Dockerコンテナ上のプロジェクトが開かれる  
+Dockerコンテナ上のプロジェクトを開いたら右下の通知欄で[rust\-analyzer](https://rust-analyzer.github.io/)に必要な言語サーバーをダウンロードするか聞いてくるのでDownload nowを選択する．
+
+
+以下 Dockerコンテナ上で実行  
 
 `.env.example`ファイルを`.env`にコピーする
 
 ```bash
-cat .env.example > .env # cp .env.example .env も可
-```
-
-diesel_cli のインストール
-```bash
-cargo install diesel_cli --no-default-features --features postgres
+cp .env.example .env
 ```
 
 `diesel`のセットアップを行う．
@@ -118,7 +117,14 @@ query {
 }
 ```
 
-## データベースの変更と確認方法
+## Hot reload
+`cargo run`の代わりに以下のコマンドを実行するとファイル変更するたびに自動でコンパイルされる
+
+```bash
+cargo watch -x run
+```
+
+## Reset database
 
 `up.sql`を変更した場合，以下のコマンドでデータベースの更新を行う．
 
