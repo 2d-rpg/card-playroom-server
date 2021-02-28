@@ -29,16 +29,66 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 #[rtype(result = "()")]
 pub struct Message(pub String);
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RoomInfo {
     pub id: Uuid,
     pub name: String,
     pub num: usize,
 }
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RoomInfoList {
     pub rooms: Vec<RoomInfo>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ErrorMessage {
+    pub message: String,
+}
+
+pub trait MessageData {}
+
+impl MessageData for RoomInfo {}
+impl MessageData for RoomInfoList {}
+impl MessageData for ErrorMessage {}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct WsMessage<T: MessageData> {
+    data: T,
+    event: ws_actors::Event,
+    status: ws_actors::Status,
+}
+
+impl RoomInfo {
+    pub fn get_json_data(&self, status: ws_actors::Status, event: ws_actors::Event) -> String {
+        serde_json::to_string(&WsMessage {
+            data: self.clone(),
+            event,
+            status,
+        })
+        .unwrap()
+    }
+}
+
+impl RoomInfoList {
+    pub fn get_json_data(&self, status: ws_actors::Status, event: ws_actors::Event) -> String {
+        serde_json::to_string(&WsMessage {
+            data: self.clone(),
+            event,
+            status,
+        })
+        .unwrap()
+    }
+}
+
+impl ErrorMessage {
+    pub fn get_json_data(&self, status: ws_actors::Status, event: ws_actors::Event) -> String {
+        serde_json::to_string(&WsMessage {
+            data: self.clone(),
+            event,
+            status,
+        })
+        .unwrap()
+    }
 }
 
 /// `ChatSession` actor is responsible for tcp peer communications.
@@ -199,20 +249,31 @@ impl ChatSession {
 /// chat actors.
 pub fn tcp_server(s: &str, server: Addr<ChatServer>) {
     // Create server listener
-    let addr = net::SocketAddr::from_str(s).unwrap();
+    let addr = net::SocketAddr::from_str(s).unwrap_or_else(|_| {
+        panic!(
+            "Invalid socket address: {}. Please check IP address or port number.",
+            s
+        )
+    });
 
     actix_web::rt::spawn(async move {
         let server = server.clone();
-        let mut listener = TcpListener::bind(&addr).await.unwrap();
+        let mut listener = TcpListener::bind(&addr)
+            .await
+            .unwrap_or_else(|_| panic!("Cannot bind TCP listener to socket address: {}", &addr));
         let mut incoming = listener.incoming();
 
         while let Some(stream) = incoming.next().await {
             match stream {
                 Ok(stream) => {
                     let server = server.clone();
+                    // Create ChatSession Actor
                     ChatSession::create(|ctx| {
+                        // Split TcpStream into ReadHalf and WriteHalf
                         let (r, w) = split(stream);
+                        // Register tcp stream as reader to execution context for this ChatSession Actor
                         ChatSession::add_stream(FramedRead::new(r, ChatCodec), ctx);
+                        // Register address of server actor with which this actor communicate and writer for this ChatSession Actor
                         ChatSession::new(server, actix::io::FramedWrite::new(w, ChatCodec, ctx))
                     });
                 }
@@ -321,10 +382,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 .then(|res, _, ctx| {
                                     match res {
                                         Ok(rooms) => {
-                                            let mut data = String::from("{ \"data\": ");
-                                            data.push_str(&serde_json::to_string(&rooms).unwrap());
-                                            data.push_str(" }");
-                                            ctx.text(data);
+                                            ctx.text(rooms.get_json_data(
+                                                ws_actors::Status::Ok,
+                                                ws_actors::Event::GetRoomList,
+                                            ));
                                         }
                                         _ => println!("Something is wrong"),
                                     }
@@ -338,12 +399,25 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         "/join" => {
                             if v.len() == 2 {
                                 self.room = Some(Uuid::parse_str(v[1]).unwrap());
-                                self.addr.do_send(ws_actors::Join {
-                                    session_id: self.id,
-                                    room_id: Uuid::parse_str(v[1]).unwrap(),
-                                });
-
-                                ctx.text("joined");
+                                self.addr
+                                    .send(ws_actors::Join {
+                                        session_id: self.id,
+                                        room_id: Uuid::parse_str(v[1]).unwrap(),
+                                    })
+                                    .into_actor(self)
+                                    .then(|res, _, ctx| {
+                                        match res {
+                                            Ok(room_info) => {
+                                                ctx.text(room_info.get_json_data(
+                                                    ws_actors::Status::Ok,
+                                                    ws_actors::Event::EnterRoom,
+                                                ));
+                                            }
+                                            _ => println!("Something is wrong!"),
+                                        }
+                                        fut::ready(())
+                                    })
+                                    .wait(ctx)
                             } else {
                                 ctx.text("!!! room id is required");
                             }
@@ -360,37 +434,55 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     .then(|res, _, ctx| {
                                         match res {
                                             Ok(createroom) => {
-                                                    let mut data = String::from(
-                                                        "{ \"status\": \"ok\", \"event\": \"create\", \"data\": ",
-                                                    );
-                                                    data.push_str(
-                                                        &serde_json::to_string(&RoomInfo {
-                                                            id: createroom.room_id,
-                                                            name: createroom.room_name,
-                                                            num: 0
-                                                        })
-                                                        .unwrap(),
-                                                    );
-                                                    data.push_str(" }");
-                                                    ctx.text(data);
+                                                let data = RoomInfo {
+                                                    id: createroom.room_id,
+                                                    name: createroom.room_name,
+                                                    num: 0,
+                                                };
+                                                ctx.text(data.get_json_data(
+                                                    ws_actors::Status::Ok,
+                                                    ws_actors::Event::CreateRoom,
+                                                ));
                                             }
+                                            // TODO: statusをerrorとして返した方がよい？
                                             _ => println!("Something is wrong"),
                                         }
                                         fut::ready(())
                                     })
                                     .wait(ctx)
                             } else {
-                                ctx.text("!!! room name is required");
+                                ctx.text(
+                                    ErrorMessage {
+                                        message: "!!! room name is required".to_string(),
+                                    }
+                                    .get_json_data(
+                                        ws_actors::Status::Error,
+                                        ws_actors::Event::Unknown,
+                                    ),
+                                );
                             }
                         }
                         "/name" => {
                             if v.len() == 2 {
                                 self.name = Some(v[1].to_owned());
                             } else {
-                                ctx.text("!!! name is required");
+                                ctx.text(
+                                    ErrorMessage {
+                                        message: "!!! name is required".to_string(),
+                                    }
+                                    .get_json_data(
+                                        ws_actors::Status::Error,
+                                        ws_actors::Event::Unknown,
+                                    ),
+                                );
                             }
                         }
-                        _ => ctx.text(format!("!!! unknown command: {:?}", m)),
+                        _ => ctx.text(
+                            ErrorMessage {
+                                message: format!("!!! unknown command: {:?}", m),
+                            }
+                            .get_json_data(ws_actors::Status::Error, ws_actors::Event::Unknown),
+                        ),
                     }
                 } else {
                     let msg = if let Some(ref name) = self.name {

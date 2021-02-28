@@ -3,6 +3,7 @@
 //! room through `ChatServer`.
 
 use actix::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
@@ -17,6 +18,36 @@ pub struct Connect {
 
 impl actix::Message for Connect {
     type Result = Uuid;
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum Status {
+    Ok,
+    Error,
+}
+
+impl std::fmt::Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+        // or, alternatively:
+        // fmt::Debug::fmt(self, f)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum Event {
+    CreateRoom,
+    EnterRoom,
+    GetRoomList,
+    Unknown,
+}
+
+impl std::fmt::Display for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+        // or, alternatively:
+        // fmt::Debug::fmt(self, f)
+    }
 }
 
 /// Session is disconnected
@@ -45,14 +76,16 @@ impl actix::Message for ListRooms {
     type Result = ws_session::RoomInfoList;
 }
 
-/// Join room, if room does not exists create new one.
-#[derive(Message)]
-#[rtype(result = "()")]
+/// Join room.
 pub struct Join {
     /// Client id
     pub session_id: Uuid,
     /// Room id
     pub room_id: Uuid,
+}
+
+impl actix::Message for Join {
+    type Result = ws_session::RoomInfo;
 }
 
 pub struct Create {
@@ -133,6 +166,7 @@ impl ChatServer {
     fn update_room_list(&self) {
         let mut rooms = Vec::new();
 
+        // Get room list
         for (room_id, Room { name, members }) in &self.rooms {
             let room = ws_session::RoomInfo {
                 id: room_id.clone(),
@@ -141,11 +175,10 @@ impl ChatServer {
             };
             rooms.push(room);
         }
-        let mut data = String::from("{ \"data\": ");
-        data.push_str(&serde_json::to_string(&ws_session::RoomInfoList { rooms }).unwrap());
-        data.push_str(" }");
-
-        self.send_all(&data);
+        self.send_all(
+            &ws_session::RoomInfoList { rooms: rooms }
+                .get_json_data(Status::Ok, Event::GetRoomList),
+        );
     }
 
     fn add_room(&mut self, session_id: &Uuid, room_name: &str) -> MessageResult<Create> {
@@ -260,9 +293,9 @@ impl Handler<ListRooms> for ChatServer {
 /// Join room, send disconnect message to old room
 /// send join message to new room
 impl Handler<Join> for ChatServer {
-    type Result = ();
+    type Result = MessageResult<Join>;
 
-    fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
+    fn handle(&mut self, msg: Join, _: &mut Context<Self>) -> Self::Result {
         let Join {
             session_id,
             room_id,
@@ -273,9 +306,15 @@ impl Handler<Join> for ChatServer {
         // add session id
         self.rooms
             .get_mut(&room_id)
+            // TODO Result
             .unwrap()
             .members
             .insert(session_id);
+        MessageResult(ws_session::RoomInfo {
+            id: room_id,
+            name: self.rooms.get(&room_id).unwrap().name.clone(),
+            num: self.rooms.get(&room_id).unwrap().members.len(),
+        })
     }
 }
 
