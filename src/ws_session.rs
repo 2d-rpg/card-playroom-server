@@ -45,14 +45,8 @@ pub struct ErrorMessage {
     pub message: String,
 }
 
-pub trait MessageData {}
-
-impl MessageData for RoomInfo {}
-impl MessageData for RoomInfoList {}
-impl MessageData for ErrorMessage {}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct WsMessage<T: MessageData> {
+pub struct WsMessage<T> {
     data: T,
     event: ws_actors::Event,
     status: ws_actors::Status,
@@ -72,7 +66,7 @@ impl RoomInfo {
 impl RoomInfoList {
     pub fn get_json_data(&self, status: ws_actors::Status, event: ws_actors::Event) -> String {
         serde_json::to_string(&WsMessage {
-            data: self.clone(),
+            data: self.clone().rooms,
             event,
             status,
         })
