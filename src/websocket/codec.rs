@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use std::io;
 
-use crate::ws_session;
 use actix::prelude::*;
 use actix_codec::{Decoder, Encoder};
 use byteorder::{BigEndian, ByteOrder};
@@ -9,6 +8,8 @@ use bytes::{BufMut, BytesMut};
 use serde::{Deserialize, Serialize};
 use serde_json as json;
 use uuid::Uuid;
+
+use super::RoomInfoList;
 
 /// Client request
 #[derive(Serialize, Deserialize, Debug, Message)]
@@ -33,7 +34,7 @@ pub enum ChatResponse {
     Ping,
 
     /// List of rooms
-    Rooms(ws_session::RoomInfoList),
+    Rooms(RoomInfoList),
 
     /// Joined
     Joined(Uuid),

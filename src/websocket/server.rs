@@ -1,127 +1,7 @@
-//! `ChatServer` is an actor. It maintains list of connection client session.
-//! And manages available rooms. Peers send messages to other peers in same
-//! room through `ChatServer`.
+use std::collections::HashMap;
 
-use actix::prelude::*;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use uuid::Uuid;
-
-use crate::ws_session;
-
-/// Message for chat server communications
-
-/// New chat session is created
-pub struct Connect {
-    pub addr: Recipient<ws_session::Message>,
-}
-
-impl actix::Message for Connect {
-    type Result = Uuid;
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Status {
-    Ok,
-    Error,
-}
-
-impl std::fmt::Display for Status {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-        // or, alternatively:
-        // fmt::Debug::fmt(self, f)
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Event {
-    CreateRoom,
-    EnterRoom,
-    GetRoomList,
-    Unknown,
-}
-
-impl std::fmt::Display for Event {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-        // or, alternatively:
-        // fmt::Debug::fmt(self, f)
-    }
-}
-
-/// Session is disconnected
-#[derive(Message)]
-#[rtype(result = "()")]
-pub struct Disconnect {
-    pub id: Uuid,
-}
-
-/// Send message to specific room
-#[derive(Message)]
-#[rtype(result = "()")]
-pub struct Message {
-    /// Id of the client session
-    pub id: Uuid,
-    /// Peer message
-    pub msg: String,
-    /// Room id
-    pub room: Uuid,
-}
-
-/// List of available rooms
-pub struct ListRooms;
-
-impl actix::Message for ListRooms {
-    type Result = ws_session::RoomInfoList;
-}
-
-/// Join room.
-pub struct Join {
-    /// Client id
-    pub session_id: Uuid,
-    /// Room id
-    pub room_id: Uuid,
-}
-
-impl actix::Message for Join {
-    type Result = ws_session::RoomInfo;
-}
-
-pub struct Create {
-    /// Client id
-    pub session_id: Uuid,
-    /// Room name
-    pub room_name: String,
-}
-
-pub struct CreateRoom {
-    pub room_id: Uuid,
-    pub room_name: String,
-}
-
-impl actix::Message for Create {
-    type Result = CreateRoom;
-}
-
-pub struct Session {
-    address: Recipient<ws_session::Message>,
-}
-
-pub struct Room {
-    name: String,
-    members: HashSet<Uuid>,
-}
-
-impl Room {
-    fn remove_member(&mut self, session_id: &Uuid) -> bool {
-        self.members.remove(session_id)
-    }
-
-    fn is_empty(&self) -> bool {
-        self.members.is_empty()
-    }
-}
+use super::Message;
+use super::*;
 
 /// `ChatServer` manages chat rooms and responsible for coordinating chat
 /// session. implementation is super primitive
@@ -144,11 +24,9 @@ impl ChatServer {
     fn send_message(&self, room: &Uuid, message: &str, skip_id: Uuid) {
         if let Some(Room { name: _, members }) = self.rooms.get(room) {
             for id in members {
-                println!("{}", id);
                 if *id != skip_id {
                     if let Some(Session { address }) = self.sessions.get(id) {
-                        println!("{:?}", address);
-                        let _ = address.do_send(ws_session::Message(message.to_owned()));
+                        let _ = address.do_send(ChatMessage(message.to_owned()));
                     }
                 }
             }
@@ -157,9 +35,7 @@ impl ChatServer {
 
     fn send_all(&self, message: &str) {
         for (_session_id, session) in &self.sessions {
-            let _ = session
-                .address
-                .do_send(ws_session::Message(message.to_owned()));
+            let _ = session.address.do_send(ChatMessage(message.to_owned()));
         }
     }
 
@@ -168,17 +44,14 @@ impl ChatServer {
 
         // Get room list
         for (room_id, Room { name, members }) in &self.rooms {
-            let room = ws_session::RoomInfo {
+            let room = RoomInfo {
                 id: room_id.clone(),
                 name: name.to_owned(),
                 num: members.len(),
             };
             rooms.push(room);
         }
-        self.send_all(
-            &ws_session::RoomInfoList { rooms: rooms }
-                .get_json_data(Status::Ok, Event::GetRoomList),
-        );
+        self.send_all(&RoomInfoList { rooms: rooms }.get_json_data(Status::Ok, Event::GetRoomList));
     }
 
     fn add_room(&mut self, session_id: &Uuid, room_name: &str) -> MessageResult<Create> {
@@ -200,7 +73,7 @@ impl ChatServer {
         self.rooms.remove(room_id);
     }
 
-    fn add_session(&mut self, address: Recipient<ws_session::Message>) -> Uuid {
+    fn add_session(&mut self, address: Recipient<ChatMessage>) -> Uuid {
         let session_id = Uuid::new_v4();
         self.sessions
             .insert(session_id, Session { address: address });
@@ -278,7 +151,7 @@ impl Handler<ListRooms> for ChatServer {
         let mut rooms = Vec::new();
 
         for (room_id, Room { name, members }) in &self.rooms {
-            let room = ws_session::RoomInfo {
+            let room = RoomInfo {
                 id: room_id.clone(),
                 name: name.to_owned(),
                 num: members.len(),
@@ -286,7 +159,7 @@ impl Handler<ListRooms> for ChatServer {
             rooms.push(room);
         }
 
-        MessageResult(ws_session::RoomInfoList { rooms })
+        MessageResult(RoomInfoList { rooms })
     }
 }
 
@@ -310,7 +183,7 @@ impl Handler<Join> for ChatServer {
             .unwrap()
             .members
             .insert(session_id);
-        MessageResult(ws_session::RoomInfo {
+        MessageResult(RoomInfo {
             id: room_id,
             name: self.rooms.get(&room_id).unwrap().name.clone(),
             num: self.rooms.get(&room_id).unwrap().members.len(),
