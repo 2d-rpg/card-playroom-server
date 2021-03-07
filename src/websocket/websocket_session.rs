@@ -9,6 +9,7 @@ use super::*;
 
 /// `WsChatSession` is Actor for websocket
 pub struct WsChatSession {
+    // TODO newの実装を行い、pubをつけないように変更
     /// unique session id
     pub id: Uuid,
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
@@ -19,7 +20,7 @@ pub struct WsChatSession {
     /// peer name
     pub name: Option<String>,
     /// Chat server
-    pub addr: Addr<server::ChatServer>,
+    pub addr: Addr<room_manager::ChatServer>,
 }
 
 impl Actor for WsChatSession {
@@ -145,7 +146,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     })
                                     .wait(ctx)
                             } else {
-                                ctx.text("!!! room id is required");
+                                ctx.text(
+                                    ErrorMessage {
+                                        message: "!!! room id is required".to_string(),
+                                    }
+                                    .get_json_data(Status::Error, Event::EnterRoom),
+                                );
                             }
                         }
                         "/create" => {

@@ -15,7 +15,7 @@ pub struct ChatSession {
     /// unique session id
     id: Uuid,
     /// this is address of chat server
-    addr: Addr<server::ChatServer>,
+    addr: Addr<room_manager::ChatServer>,
     /// Client must send ping at least once per 10 seconds, otherwise we drop
     /// connection.
     hb: Instant,
@@ -128,7 +128,7 @@ impl Handler<ChatMessage> for ChatSession {
 /// Helper methods
 impl ChatSession {
     pub fn new(
-        addr: Addr<server::ChatServer>,
+        addr: Addr<room_manager::ChatServer>,
         framed: actix::io::FramedWrite<codec::ChatResponse, WriteHalf<TcpStream>, codec::ChatCodec>,
     ) -> ChatSession {
         ChatSession {
@@ -166,7 +166,7 @@ impl ChatSession {
 
 /// Define tcp server that will accept incoming tcp connection and create
 /// chat actors.
-pub fn tcp_server(s: &str, server: Addr<server::ChatServer>) {
+pub fn tcp_server(s: &str, server: Addr<room_manager::ChatServer>) {
     // Create server listener
     let addr = net::SocketAddr::from_str(s).unwrap_or_else(|_| {
         panic!(

@@ -3,13 +3,10 @@ extern crate diesel;
 extern crate dotenv;
 
 use std::env;
-// use std::time::{Duration, Instant};
 
-// use actix::prelude::*;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, App, HttpServer};
-// use actix_web_actors::ws;
 use actix::Actor;
 
 use diesel::{
@@ -40,7 +37,7 @@ async fn main() -> std::io::Result<()> {
     let db_pool = create_db_pool();
 
     // Start game server actor
-    let ws_server = websocket::server::ChatServer::default().start();
+    let ws_server = websocket::room_manager::ChatServer::default().start();
 
     // Start tcp server in separate thread
     let srv = ws_server.clone();

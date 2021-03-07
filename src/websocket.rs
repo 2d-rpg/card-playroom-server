@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    fmt::{Display, Formatter},
     time::{Duration, Instant},
 };
 
@@ -10,9 +11,45 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 mod codec;
-pub mod server;
+pub mod room_manager;
 pub mod tcp_session;
 mod websocket_session;
+
+/// Status list for websocket
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum Status {
+    Ok,
+    Error,
+}
+
+impl Display for Status {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+        // or, alternatively:
+        // fmt::Debug::fmt(self, f)
+    }
+}
+
+/// Event list for websocket
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum Event {
+    /// event for creating room
+    CreateRoom,
+    /// event for entering room
+    EnterRoom,
+    /// event for getting room list
+    GetRoomList,
+    /// unexpected event
+    Unknown,
+}
+
+impl Display for Event {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+        // or, alternatively:
+        // fmt::Debug::fmt(self, f)
+    }
+}
 
 /// Message for chat server communications
 /// New chat session is created
@@ -22,36 +59,6 @@ pub struct Connect {
 
 impl actix::Message for Connect {
     type Result = Uuid;
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Status {
-    Ok,
-    Error,
-}
-
-impl std::fmt::Display for Status {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-        // or, alternatively:
-        // fmt::Debug::fmt(self, f)
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Event {
-    CreateRoom,
-    EnterRoom,
-    GetRoomList,
-    Unknown,
-}
-
-impl std::fmt::Display for Event {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-        // or, alternatively:
-        // fmt::Debug::fmt(self, f)
-    }
 }
 
 /// Session is disconnected
@@ -197,7 +204,7 @@ impl ErrorMessage {
 async fn ws_route(
     req: HttpRequest,
     stream: web::Payload,
-    srv: web::Data<Addr<server::ChatServer>>,
+    srv: web::Data<Addr<room_manager::ChatServer>>,
     // db_pool: web::Data<DbPool>,
 ) -> Result<HttpResponse, Error> {
     // print request headers
