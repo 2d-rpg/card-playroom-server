@@ -3,13 +3,10 @@ extern crate diesel;
 extern crate dotenv;
 
 use std::env;
-// use std::time::{Duration, Instant};
 
-// use actix::prelude::*;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, App, HttpServer};
-// use actix_web_actors::ws;
 use actix::Actor;
 
 use diesel::{
@@ -17,8 +14,9 @@ use diesel::{
     r2d2::{self, ConnectionManager},
 };
 
+use card_playroom_server::websocket;
+
 pub mod card;
-pub mod codec;
 pub mod deck;
 pub mod edit_deck;
 pub mod graphql;
@@ -26,8 +24,6 @@ pub mod index;
 pub mod models;
 pub mod schema;
 pub mod upload;
-pub mod ws_actors;
-pub mod ws_session;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type DbCon = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
@@ -41,11 +37,11 @@ async fn main() -> std::io::Result<()> {
     let db_pool = create_db_pool();
 
     // Start game server actor
-    let ws_server = ws_actors::ChatServer::default().start();
+    let ws_server = websocket::room_manager::ChatServer::default().start();
 
     // Start tcp server in separate thread
     let srv = ws_server.clone();
-    ws_session::tcp_server("127.0.0.1:12345", srv);
+    websocket::tcp_session::tcp_server("127.0.0.1:12345", srv);
 
     println!("Started http server: 127.0.0.1:8080");
 
@@ -68,7 +64,7 @@ async fn main() -> std::io::Result<()> {
                     .max_age(3600),
             )
             .configure(graphql::register)
-            .configure(ws_session::register)
+            .configure(websocket::register)
             .configure(index::register)
             .configure(card::register)
             .configure(edit_deck::register)
