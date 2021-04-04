@@ -192,9 +192,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 );
                             }
                         }
-                        "/name" => {
+                        "/cards" => {
                             if v.len() == 2 {
-                                self.name = Some(v[1].to_owned());
+                                let msg = v[1].to_owned();
+                                if let Some(room) = self.room {
+                                    self.addr.do_send(Message {
+                                        id: self.id,
+                                        msg,
+                                        room: room,
+                                    })
+                                }
                             } else {
                                 ctx.text(
                                     ErrorMessage {
@@ -212,19 +219,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         ),
                     }
                 } else {
-                    let msg = if let Some(ref name) = self.name {
-                        format!("{}: {}", name, m)
-                    } else {
-                        m.to_owned()
-                    };
-                    // send message to chat server
-                    if let Some(room) = self.room {
-                        self.addr.do_send(Message {
-                            id: self.id,
-                            msg,
-                            room: room,
-                        })
-                    }
+                    ctx.text(
+                        ErrorMessage {
+                            message: "!!! message must starts with /".to_string(),
+                        }
+                        .get_json_data(Status::Error, Event::Unknown),
+                    );
                 }
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),
