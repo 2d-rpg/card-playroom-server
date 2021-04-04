@@ -147,7 +147,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     .wait(ctx)
                             } else {
                                 ctx.text(
-                                    ErrorMessage {
+                                    SimpleMessage {
                                         message: "!!! room id is required".to_string(),
                                     }
                                     .get_json_data(Status::Error, Event::EnterRoom),
@@ -185,7 +185,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     .wait(ctx)
                             } else {
                                 ctx.text(
-                                    ErrorMessage {
+                                    SimpleMessage {
                                         message: "!!! room name is required".to_string(),
                                     }
                                     .get_json_data(Status::Error, Event::Unknown),
@@ -204,15 +204,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 }
                             } else {
                                 ctx.text(
-                                    ErrorMessage {
-                                        message: "!!! name is required".to_string(),
+                                    SimpleMessage {
+                                        message: "!!! cards info is required".to_string(),
                                     }
                                     .get_json_data(Status::Error, Event::Unknown),
                                 );
                             }
                         }
                         _ => ctx.text(
-                            ErrorMessage {
+                            SimpleMessage {
                                 message: format!("!!! unknown command: {:?}", m),
                             }
                             .get_json_data(Status::Error, Event::Unknown),
@@ -220,7 +220,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     }
                 } else {
                     ctx.text(
-                        ErrorMessage {
+                        SimpleMessage {
                             message: "!!! message must starts with /".to_string(),
                         }
                         .get_json_data(Status::Error, Event::Unknown),

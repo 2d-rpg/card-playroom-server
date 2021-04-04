@@ -39,6 +39,8 @@ pub enum Event {
     EnterRoom,
     /// event for getting room list
     GetRoomList,
+    /// event for someone entering room
+    SomeoneEnterRoom,
     /// unexpected event
     Unknown,
 }
@@ -156,7 +158,7 @@ pub struct RoomInfoList {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ErrorMessage {
+pub struct SimpleMessage {
     pub message: String,
 }
 
@@ -189,7 +191,7 @@ impl RoomInfoList {
     }
 }
 
-impl ErrorMessage {
+impl SimpleMessage {
     pub fn get_json_data(&self, status: Status, event: Event) -> String {
         serde_json::to_string(&WsMessage {
             data: self.clone(),
