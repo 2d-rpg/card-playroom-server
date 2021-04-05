@@ -41,6 +41,8 @@ pub enum Event {
     GetRoomList,
     /// event for someone entering room
     SomeoneEnterRoom,
+    /// event for receive cards info
+    CardsInfo,
     /// unexpected event
     Unknown,
 }
@@ -147,6 +149,20 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 pub struct ChatMessage(pub String);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CardInfo {
+    pub index: i32,
+    pub is_own: bool,
+    pub position_x: i32,
+    pub position_y: i32,
+    pub init_x: i32,
+    pub init_y: i32,
+}
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CardInfoList {
+    pub cards: Vec<CardInfo>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RoomInfo {
     pub id: Uuid,
     pub name: String,
@@ -184,6 +200,17 @@ impl RoomInfoList {
     pub fn get_json_data(&self, status: Status, event: Event) -> String {
         serde_json::to_string(&WsMessage {
             data: self.clone().rooms,
+            event,
+            status,
+        })
+        .unwrap()
+    }
+}
+
+impl CardInfoList {
+    pub fn get_json_data(&self, status: Status, event: Event) -> String {
+        serde_json::to_string(&WsMessage {
+            data: self.clone().cards,
             event,
             status,
         })
