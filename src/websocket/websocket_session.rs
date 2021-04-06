@@ -195,6 +195,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         "/cards" => {
                             if v.len() == 2 {
                                 let msg = v[1].to_owned();
+                                dbg!(&msg);
                                 let card_info: Vec<CardInfo> = serde_json::from_str(&msg).unwrap();
                                 let card_info_list = CardInfoList { cards: card_info };
                                 if let Some(room) = self.room {

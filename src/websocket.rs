@@ -151,11 +151,9 @@ pub struct ChatMessage(pub String);
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CardInfo {
     pub index: i32,
-    pub is_own: bool,
-    pub position_x: i32,
-    pub position_y: i32,
-    pub init_x: i32,
-    pub init_y: i32,
+    pub own: bool,
+    pub x: f32,
+    pub y: f32,
 }
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CardInfoList {
