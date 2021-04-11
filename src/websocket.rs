@@ -149,11 +149,20 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 pub struct ChatMessage(pub String);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CardPosition {
+    x: f32,
+    y: f32,
+}
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CardInfo {
+    pub id: i32,
+    pub face: String,
+    pub back: String,
     pub index: i32,
     pub own: bool,
-    pub x: f32,
-    pub y: f32,
+    pub position: CardPosition,
+    pub initx: f32,
+    pub inity: f32,
 }
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CardInfoList {
