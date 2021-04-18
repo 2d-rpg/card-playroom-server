@@ -202,7 +202,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     self.addr.do_send(Message {
                                         id: self.id,
                                         msg: card_info_list
-                                            .get_json_data(Status::Ok, Event::CardsInfo),
+                                            .get_json_data(Status::Ok, Event::FirstCardsInfo),
                                         room: room,
                                     })
                                 }

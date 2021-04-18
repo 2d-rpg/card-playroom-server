@@ -41,8 +41,8 @@ pub enum Event {
     GetRoomList,
     /// event for someone entering room
     SomeoneEnterRoom,
-    /// event for receive cards info
-    CardsInfo,
+    /// event for receive first cards info
+    FirstCardsInfo,
     /// unexpected event
     Unknown,
 }
