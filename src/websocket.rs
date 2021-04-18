@@ -161,8 +161,6 @@ pub struct CardInfo {
     pub index: i32,
     pub own: bool,
     pub position: CardPosition,
-    pub initx: f32,
-    pub inity: f32,
 }
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CardInfoList {
