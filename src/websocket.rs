@@ -43,6 +43,8 @@ pub enum Event {
     SomeoneEnterRoom,
     /// event for receive first cards info
     FirstCardsInfo,
+    /// event for receive cards info (not first)
+    CardsInfo,
     /// unexpected event
     Unknown,
 }
