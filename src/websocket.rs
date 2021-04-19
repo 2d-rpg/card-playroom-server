@@ -163,8 +163,6 @@ pub struct CardInfo {
     pub index: i32,
     pub own: bool,
     pub position: CardPosition,
-    pub offsetx: f32,
-    pub offsety: f32,
 }
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CardInfoList {
