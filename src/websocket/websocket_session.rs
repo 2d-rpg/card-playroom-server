@@ -147,7 +147,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     .wait(ctx)
                             } else {
                                 ctx.text(
-                                    ErrorMessage {
+                                    SimpleMessage {
                                         message: "!!! room id is required".to_string(),
                                     }
                                     .get_json_data(Status::Error, Event::EnterRoom),
@@ -185,46 +185,73 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     .wait(ctx)
                             } else {
                                 ctx.text(
-                                    ErrorMessage {
+                                    SimpleMessage {
                                         message: "!!! room name is required".to_string(),
                                     }
                                     .get_json_data(Status::Error, Event::Unknown),
                                 );
                             }
                         }
-                        "/name" => {
+                        "/first-cards" => {
                             if v.len() == 2 {
-                                self.name = Some(v[1].to_owned());
+                                let msg = v[1].to_owned();
+                                dbg!(&msg);
+                                let card_info: Vec<CardInfo> = serde_json::from_str(&msg).unwrap();
+                                let card_info_list = CardInfoList { cards: card_info };
+                                if let Some(room) = self.room {
+                                    self.addr.do_send(Message {
+                                        id: self.id,
+                                        msg: card_info_list
+                                            .get_json_data(Status::Ok, Event::FirstCardsInfo),
+                                        room,
+                                    })
+                                }
                             } else {
                                 ctx.text(
-                                    ErrorMessage {
-                                        message: "!!! name is required".to_string(),
+                                    SimpleMessage {
+                                        message: "!!! cards info is required".to_string(),
+                                    }
+                                    .get_json_data(Status::Error, Event::Unknown),
+                                );
+                            }
+                        }
+                        "/cards" => {
+                            if v.len() == 2 {
+                                let msg = v[1].to_owned();
+                                dbg!(&msg);
+                                let card_info: Vec<CardInfo> = serde_json::from_str(&msg).unwrap();
+                                let card_info_list = CardInfoList { cards: card_info };
+                                if let Some(room) = self.room {
+                                    self.addr.do_send(Message {
+                                        id: self.id,
+                                        msg: card_info_list
+                                            .get_json_data(Status::Ok, Event::CardsInfo),
+                                        room,
+                                    })
+                                }
+                            } else {
+                                ctx.text(
+                                    SimpleMessage {
+                                        message: "!!! cards info is required".to_string(),
                                     }
                                     .get_json_data(Status::Error, Event::Unknown),
                                 );
                             }
                         }
                         _ => ctx.text(
-                            ErrorMessage {
+                            SimpleMessage {
                                 message: format!("!!! unknown command: {:?}", m),
                             }
                             .get_json_data(Status::Error, Event::Unknown),
                         ),
                     }
                 } else {
-                    let msg = if let Some(ref name) = self.name {
-                        format!("{}: {}", name, m)
-                    } else {
-                        m.to_owned()
-                    };
-                    // send message to chat server
-                    if let Some(room) = self.room {
-                        self.addr.do_send(Message {
-                            id: self.id,
-                            msg,
-                            room: room,
-                        })
-                    }
+                    ctx.text(
+                        SimpleMessage {
+                            message: "!!! message must starts with /".to_string(),
+                        }
+                        .get_json_data(Status::Error, Event::Unknown),
+                    );
                 }
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),

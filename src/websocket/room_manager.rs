@@ -175,7 +175,11 @@ impl Handler<Join> for ChatServer {
         } = msg;
 
         // send all users in the room except self
-        self.send_message(&room_id, "Someone connected", session_id);
+        let msg = SimpleMessage {
+            message: "Someone is connected".to_string(),
+        }
+        .get_json_data(Status::Ok, Event::SomeoneEnterRoom);
+        self.send_message(&room_id, &msg, session_id);
         // add session id
         self.rooms
             .get_mut(&room_id)
