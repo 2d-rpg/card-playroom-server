@@ -14,8 +14,8 @@ jobs:
       - name: Build & Push Docker Image
         uses: mr-smithers-excellent/docker-build-push@v5
         with:
-   　     image: natadecocoa/card-playroom-server
-  　      tags: v1, beta
-  　      registry: docker.io
-  　      username: ${{ secrets.DOCKER_USERNAME }}
-   　     password: ${{ secrets.DOCKER_PASSWORD }}
+          image: natadecocoa/card-playroom-server
+          tags: v1, beta
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
