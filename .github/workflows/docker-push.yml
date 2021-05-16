@@ -19,3 +19,4 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           dockerfile: .release/Dockerfile
+          githubOrg: 2d-rpg
