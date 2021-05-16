@@ -10,6 +10,4 @@ RUN apt update \
     && apt autoremove -y \
     && apt clean -y \
     && rm -rf /var/lib/apt/lists/* \
-    && cargo install diesel_cli --no-default-features --features postgres \
-    && diesel migration run \
-    && cargo run
+    && cargo install diesel_cli --no-default-features --features postgres
