@@ -22,14 +22,6 @@ table! {
     }
 }
 
-table! {
-    rooms (id) {
-        id -> Int4,
-        name -> Varchar,
-        players -> Array<Text>,
-    }
-}
-
 joinable!(belongings -> cards (card_id));
 joinable!(belongings -> decks (deck_id));
 
@@ -37,5 +29,4 @@ allow_tables_to_appear_in_same_query!(
     belongings,
     cards,
     decks,
-    rooms,
 );

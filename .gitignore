@@ -14,7 +14,8 @@
 
 .env
 
-migrations/
+migrations/*
+!migrations/00000000000000_diesel_initial_setup/
 
 assets/back/*
 !assets/back/.gitkeep

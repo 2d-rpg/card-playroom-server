@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:13.0
+    container_name: db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: mydb
+    networks:
+      - backend
+
+  web:
+    image: natadecocoa/card-playroom-server:latest
+    container_name: web
+    ports:
+      - "8080:8080"
+    working_dir: /card-playroom-server
+    volumes:
+      - ..:/card-playroom-server:cached
+    depends_on:
+      - db
+    command: /bin/sh -c "while sleep 1000; do :; done"
+    networks:
+      - backend
+
+networks: #bridge はホストの任意のポートをコンテナのポートにマップできる。
+  backend:
+    driver: bridge
