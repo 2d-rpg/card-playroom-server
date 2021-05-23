@@ -35,12 +35,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TABLE rooms (
-  id   SERIAL  PRIMARY KEY,
-  name VARCHAR NOT NULL,
-  players TEXT[] NOT NULL
-);
-
 CREATE TABLE cards (
   id      SERIAL PRIMARY KEY,
   face    VARCHAR NOT NULL,
