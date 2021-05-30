@@ -3,18 +3,18 @@ extern crate diesel;
 extern crate dotenv;
 
 use std::env;
-// use std::time::{Duration, Instant};
 
-// use actix::prelude::*;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, App, HttpServer};
-// use actix_web_actors::ws;
+use actix::Actor;
 
 use diesel::{
     prelude::*,
     r2d2::{self, ConnectionManager},
 };
+
+use card_playroom_server::websocket;
 
 pub mod card;
 pub mod deck;
@@ -36,23 +36,35 @@ async fn main() -> std::io::Result<()> {
 
     let db_pool = create_db_pool();
 
+    // Start game server actor
+    let ws_server = websocket::room_manager::ChatServer::default().start();
+
+    // Start tcp server in separate thread
+    let srv = ws_server.clone();
+    websocket::tcp_session::tcp_server("127.0.0.1:12345", srv);
+
+    println!("Started http server: 127.0.0.1:8080");
+
     // Start http server
     HttpServer::new(move || {
         App::new()
             .data(db_pool.clone())
+            .data(ws_server.clone())
             .wrap(Logger::default())
             .wrap(
                 Cors::default()
-                    .allowed_origin("http://localhost:8080") // TODO デプロイ時のドメインに対応
-                    .allowed_origin("http://127.0.0.1:8080")
+                    .allow_any_origin() // TODO: デプロイ時にサーバのドメインを書けばいいのか調べる
                     .allowed_methods(vec!["POST", "GET"])
-                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
-                    .allowed_header(header::CONTENT_TYPE)
+                    .allowed_headers(vec![
+                        header::CONTENT_TYPE,
+                        header::AUTHORIZATION,
+                        header::ACCEPT,
+                    ])
                     .supports_credentials()
                     .max_age(3600),
             )
-            // .service(web::resource("/ws/").route(web::get().to(ws_index)))
             .configure(graphql::register)
+            .configure(websocket::register)
             .configure(index::register)
             .configure(card::register)
             .configure(edit_deck::register)

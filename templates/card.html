@@ -11,35 +11,48 @@
     </p>
     <form class="form-horizontal" method="POST" action="/card/delete" enctype="multipart/form-data">
         <button type="submit" id="deleteCardsButton" class="btn btn-danger">削除</button>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col">チェック</th>
-                    <th scope="col">ID</th>
-                    <th scope="col">表画像</th>
-                    <th scope="col">裏画像</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for card in cards %}
-                <tr>
-                    <th>
-                        <div class="form-check">
-                            <input name="card_id[]" value="{{ card.id }}" class="form-check-input position-static"
-                                type="checkbox">
-                        </div>
-                    </th>
-                    <th>{{ card.id }}</th>
-                    <td><a href="{{ card.face }}">{{ card.face }}</td>
-                    <td><a href="{{ card.back }}">{{ card.back }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div style="height:700px; overflow-y:scroll;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">チェック</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">表画像</th>
+                        <th scope="col">裏画像</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for card in cards %}
+                    <tr>
+                        <th>
+                            <div class="form-check">
+                                <input name="card_id[]" value="{{ card.id }}" class="form-check-input position-static"
+                                    type="checkbox">
+                            </div>
+                        </th>
+                        <th>{{ card.id }}</th>
+                        <td><img class="lazyload" data-src="{{ card.face }}" width="40" height="60"
+                                onmouseover="this.width=320; this.height=480"
+                                onmouseout="this.width=40; this.height=60" /><a href="{{ card.face }}">{{ card.face |
+                                split(pat="/") | last | split(pat=".") | first |
+                                truncate(length=20) }}</td>
+                        <td><img class="lazyload" data-src="{{ card.back }}" width="40" height="60"
+                                onmouseover="this.width=320; this.height=480"
+                                onmouseout="this.width=40; this.height=60" /><a href="{{ card.back }}">{{ card.back |
+                                split(pat="/") | last | split(pat=".") | first |
+                                truncate(length=20) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </form>
 </div>
 <script>
     window.onload = function () {
+        // 画像の遅延読み込み
+        lazyload();
+
         const deleteButton = document.getElementById("deleteCardsButton");
         deleteButton.addEventListener("click", function (event) {
             const isConfirmed = confirm("本当に削除しますか？");

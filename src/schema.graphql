@@ -1,34 +1,10 @@
 schema {
   query: Query
-  mutation: Mutation
 }
 
 type Query {
-  rooms: [Room!]! @juniper(ownership: "owned")
   cards: [Card!]! @juniper(ownership: "owned")
   decksWithCards: [DeckWithCards!]! @juniper(ownership: "owned")
-}
-
-type Mutation {
-  createRoom(
-    name: String!,
-    player: String!,
-  ): Room! @juniper(ownership: "owned")
-
-  enterRoom(
-    player: String!,
-    room_id: Int!,  
-  ): Room! @juniper(ownership: "owned")
-
-  removeRoom(
-    room_id: Int!
-  ): Room! @juniper(ownership: "owned")
-}
-
-type Room {
-  id: ID! @juniper(ownership: "owned")
-  name: String!
-  players: [String!]!
 }
 
 type Card {

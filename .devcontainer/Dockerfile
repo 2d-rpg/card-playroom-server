@@ -10,7 +10,7 @@ RUN apt update \
     && apt autoremove -y \
     && apt clean -y \
     && rm -rf /var/lib/apt/lists/* \
-    && rustup component add rust-analysis --toolchain 1.47.0-x86_64-unknown-linux-gnu \
-    && rustup component add rust-src --toolchain 1.47.0-x86_64-unknown-linux-gnu \
-    && rustup component add rls --toolchain 1.47.0-x86_64-unknown-linux-gnu \
+    && rustup component add rustfmt --toolchain 1.47.0-x86_64-unknown-linux-gnu \
+    && rustup component add rust-src \
     && cargo install diesel_cli --no-default-features --features postgres \
+    && cargo install cargo-watch

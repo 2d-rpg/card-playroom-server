@@ -10,8 +10,10 @@ use actix_web::{error, web, Error, HttpResponse};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use futures::{StreamExt, TryStreamExt};
+use std::ffi::OsStr;
 use std::fs;
 use std::io::Write;
+use std::path::Path;
 use std::str;
 use tera::Tera;
 
@@ -27,6 +29,7 @@ fn insert_to_ctx(
     return ctx.clone();
 }
 
+// 背面用の画像一覧をファイル名でソートして返す
 fn get_back_file_names() -> Vec<String> {
     let paths = fs::read_dir("assets/back").unwrap();
     let mut file_names: Vec<String> = Vec::new();
@@ -46,6 +49,21 @@ fn get_back_file_names() -> Vec<String> {
     }
     file_names.sort();
     file_names
+}
+
+// ファイル名が重複した際にファイル名末尾に_1,_2,_3,...と数字を追加する
+fn add_suffix(target_path: String) -> String {
+    let path = Path::new(&target_path);
+    let parent = path.parent().and_then(Path::to_str).unwrap();
+    let stem = path.file_stem().and_then(OsStr::to_str).unwrap();
+    let extension = path.extension().and_then(OsStr::to_str).unwrap();
+    let mut file_path = target_path.clone();
+    let mut count = 1;
+    while Path::new(&file_path).exists() {
+        file_path = format!("{}/{}_{}.{}", parent, stem, count, extension);
+        count += 1;
+    }
+    return file_path.to_string();
 }
 
 async fn view_upload_screen(tmpl: web::Data<tera::Tera>) -> Result<HttpResponse, Error> {
@@ -70,9 +88,11 @@ async fn upload_face(
             // 画像ファイルの保存
             let filename = content_type.get_filename().unwrap();
             face_img_file_names.push(filename.to_string());
-            // TODO ファイル名重複防止
-            let filepath = format!("assets/face/{}", sanitize_filename::sanitize(&filename));
-            let mut f = web::block(|| std::fs::File::create(filepath))
+            let not_exist_path = add_suffix(format!(
+                "assets/face/{}",
+                sanitize_filename::sanitize(&filename)
+            ));
+            let mut f = web::block(|| std::fs::File::create(not_exist_path))
                 .await
                 .unwrap();
             while let Some(chunk) = field.next().await {
@@ -80,6 +100,7 @@ async fn upload_face(
                 f = web::block(move || f.write_all(&data).map(|_| f)).await?;
             }
         } else {
+            // 選択した裏面画像を記録
             while let Some(chunk) = field.next().await {
                 let data = chunk.unwrap();
                 back_img_file_name = str::from_utf8(&data).unwrap().to_string();
@@ -112,9 +133,11 @@ async fn upload_back(
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
         let filename = content_type.get_filename().unwrap();
-        // TODO ファイル名重複防止
-        let filepath = format!("assets/back/{}", sanitize_filename::sanitize(&filename));
-        let mut f = web::block(|| std::fs::File::create(filepath))
+        let not_exist_path = add_suffix(format!(
+            "assets/back/{}",
+            sanitize_filename::sanitize(&filename)
+        ));
+        let mut f = web::block(|| std::fs::File::create(not_exist_path))
             .await
             .unwrap();
         while let Some(chunk) = field.next().await {
